@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aura Music - YouTube Client (Grafica Glaciale/Natale V7)</title>
+    <title>Aura Music </title>
     
     <link rel="icon" href="https://via.placeholder.com/192x192">
     <link rel="apple-touch-icon" href="https://via.placeholder.com/192x192">
@@ -94,15 +94,18 @@
         
         /* Player Bar (PIP) */
         .player-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 80px;
-            z-index: 100;
-            transform: translateY(100%);
-            transition: transform 0.3s ease-out; /* Animazione di entrata */
-        }
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 110px;
+  padding: 1rem 1.5rem;
+  backdrop-filter: blur(15px);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  z-index: 100;
+  transform: translateY(100%);
+  transition: transform 0.3s ease-out;
+}
         .player-bar.active {
              transform: translateY(0);
         }
@@ -189,52 +192,232 @@
             white-space: normal;
         }
         .widget-quick-access {
-            display: inline-flex;
-            width: 48%; /* Due per riga su mobile */
-            min-width: 250px;
-            margin-right: 12px;
-            height: 80px;
-            align-items: center;
+  @apply w-full h-24 flex items-center p-3 depth-glass rounded-xl transition hover:bg-white/10;
+}
+        
+        /* NUOVI STILI PER TITOLO SCORREVOLE (MARQUEE) */
+        .marquee-container {
+            overflow: hidden;
+            width: 100%;
+            padding-top: 5px; /* Spazio superiore */
+            padding-bottom: 5px; /* Spazio inferiore */
+            text-align: center; 
+        }
+        .marquee-text {
+            white-space: nowrap;
+            display: inline-block;
+            animation: marquee 10s linear infinite; /* Animazione di default */
+            min-width: 100%;
+            animation-play-state: running; /* Inizialmente in esecuzione */
+        }
+        .marquee-text:hover {
+            animation-play-state: paused; /* Metti in pausa al passaggio del mouse */
+        }
+        @keyframes marquee {
+            0%   { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        .text-4xl.font-extrabold.truncate {
+             /* Assicura che la classe truncate non prevalga sul marquee */
+             white-space: normal;
         }
 
-    </style>
+    
+/* =========================================================
+   ✨ SEZIONE MIGLIORATA: Accesso Veloce & Categorie Scorrevoli
+   ========================================================= */
+
+/* Effetto glow pulsante blu glaciale */
+@keyframes frost-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(0,191,255,0.3), inset 0 0 10px rgba(255,255,255,0.05); }
+  50% { box-shadow: 0 0 30px rgba(0,191,255,0.5), inset 0 0 15px rgba(255,255,255,0.1); }
+}
+
+/* --- Accesso Veloce --- */
+.widget-quick-access {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, rgba(0,191,255,0.15), rgba(255,255,255,0.05));
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 0 20px rgba(0,191,255,0.2);
+  transition: all 0.35s ease;
+  overflow: hidden;
+}
+
+.widget-quick-access img {
+  border-radius: 0.75rem;
+  transition: transform 0.35s ease;
+  border: 2px solid rgba(255,255,255,0.15);
+}
+
+.widget-quick-access:hover {
+  transform: translateY(-3px) scale(1.03);
+  animation: frost-glow 2s ease-in-out infinite;
+  background: linear-gradient(135deg, rgba(0,191,255,0.25), rgba(255,255,255,0.08));
+}
+
+.widget-quick-access:hover img {
+  transform: scale(1.1);
+}
+
+/* Pulsante play fluttuante */
+.widget-quick-access::after {
+  content: "▶️";
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%) scale(0.8);
+  font-size: 1.4rem;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+.widget-quick-access:hover::after {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+  filter: drop-shadow(0 0 8px rgba(0,191,255,0.7));
+}
+
+/* --- Categorie Scorrevoli (Brani) --- */
+.widget-row-item {
+  display: inline-block;
+  width: 160px;
+  margin-right: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 0 15px rgba(0,191,255,0.15);
+  transition: all 0.35s ease;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+}
+
+.widget-row-item img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  transition: transform 0.4s ease;
+}
+
+.widget-row-item:hover img {
+  transform: scale(1.08);
+}
+
+.widget-row-item:hover {
+  transform: translateY(-4px) scale(1.05);
+  animation: frost-glow 2.2s ease-in-out infinite;
+}
+
+/* Testo */
+.widget-row-item p {
+  padding: 0.3rem 0.6rem;
+}
+
+/* Overlay magico */
+.widget-row-item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top left, rgba(0,191,255,0.25), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.widget-row-item:hover::before {
+  opacity: 1;
+}
+
+/* Etichetta Mood/Vibe */
+.widget-row-item::after {
+  content: attr(data-mood);
+  position: absolute;
+  bottom: 8px;
+  right: 10px;
+  background: rgba(0,191,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 2px 6px;
+  border-radius: 0.5rem;
+  font-size: 0.65rem;
+  color: #B3E0FF;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: all 0.3s ease;
+}
+.widget-row-item:hover::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+/* AREA DESTINATA AI BANNER ON AIR E COMUNICAZIONI DA PARTE DI HORIZON E RYZN, L'AREA DEVE RESTARE VUOTA E UTILIZZABILE PER LE OPERAZIONE AUTOGESTITE IN BACKEND
+
+/* ===== SNOW EFFECT + VILLAGE (Nuove posizioni Z-Index) ===== */
+
+/* NUOVO: Stile per il Villaggio Innevato */
+#christmas-village {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 300px; /* Altezza del villaggio visibile */
+    z-index: 1; /* Sotto i contenuti, sopra la neve a terra */
+    pointer-events: none;
+    /* *** SOSTITUIRE QUESTO URL CON LA TUA IMMAGINE DEL VILLAGGIO SANTA TRACKER *** */
+    background-image: url('https://drive.google.com/file/d/1b1eOO01uEjQnlxxEzec__gcMo3QolC13/view'); 
+    background-size: contain;
+    background-repeat: repeat-x;
+    background-position: bottom center;
+    mask-image: linear-gradient(0deg, black 60%, transparent 100%);
+    opacity: 0.8;
+}
+
+/* Neve a terra (Accumulo) - Spostata in Z-index 2 */
+#snow-ground {
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  height:140px;
+  z-index: 2; /* Sopra il villaggio ma sotto la neve che cade */
+  pointer-events:none;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.08));
+  mask-image: linear-gradient(180deg, transparent 0%, black 30%);
+  opacity:0.3; /* Aumentata opacità per effetto visibile */
+  filter: blur(2px) saturate(120%);
+}
+
+/* Neve che cade (Canvas) - Spostata in Z-index 3 */
+#snow-fall {
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:3; /* Sopra tutto (fondo e villaggio) */
+}
+#snow-fall canvas { width:100%; height:100%; display:block; }
+
+
+/* ensure main app content sits above snow and village */
+.container-app { position:relative; z-index:10; }
+
+/* ensure modals and player keep their z-index priority (already high in original CSS) */
+
+</style>
 </head>
 <body class="ryzn-bg">
 
     <div id="toast-container"></div>
+    <audio id="ambient-audio" src="https://example.com/online-archive/soft-winter-melody.mp3" loop preload="auto"></audio>
+
+    <div id="snow-fall" aria-hidden="true"><canvas id="snow-canvas"></canvas></div>
+    <div id="christmas-village" aria-hidden="true"></div>
+    <div id="snow-ground" aria-hidden="true"></div>
+    
     
     <div id="yt-player-container">
         <div id="ytPlayer"></div>
-    </div>
-
-
-    <div id="auth-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[150] hidden flex items-center justify-center p-4 modal">
-        <div class="depth-glass bg-ryzn-bg p-6 rounded-2xl w-full max-w-sm shadow-2xl relative">
-            <h3 id="auth-title" class="text-2xl font-bold mb-6 accent-text text-center">Accedi ad Aura Music</h3>
-            
-            <input type="email" id="auth-email" placeholder="Email" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:accent-border text-white placeholder-gray-500 mb-3">
-            <input type="password" id="auth-password" placeholder="Password" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:accent-border text-white placeholder-gray-500 mb-6">
-            
-            <button id="auth-main-button" onclick="handleAuthAction('login')" class="w-full py-3 accent-bg rounded-lg text-white font-bold accent-hover transition">Accedi</button>
-            
-            <div class="text-center mt-4">
-                <button id="auth-switch-link" onclick="switchAuthMode('register')" class="text-sm text-gray-400 hover:accent-text transition">Registrati</button>
-            </div>
-             <button onclick="closeAuthModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white transition"><i data-lucide="x" class="w-6 h-6"></i></button>
-        </div>
-    </div>
-    
-    <div id="search-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[150] hidden flex flex-col p-4 modal">
-        <div class="w-full max-w-2xl mx-auto depth-glass bg-ryzn-bg p-6 rounded-2xl shadow-2xl relative">
-            <div class="flex items-center mb-4">
-                <input type="text" id="search-input" oninput="performSearch(true)" placeholder="Cerca brani, artisti o mood..." class="flex-grow p-3 rounded-l-lg bg-white/10 border border-white/20 text-white placeholder-gray-500 focus:outline-none">
-                <button onclick="performSearch()" class="p-3 accent-bg rounded-r-lg accent-hover"><i data-lucide="search" class="w-6 h-6"></i></button>
-            </div>
-            <div id="search-results" class="max-h-96 overflow-y-auto space-y-3 p-2">
-                <p class="text-center text-gray-500">Inizia a digitare per cercare musica su YouTube.</p>
-            </div>
-            <button onclick="closeSearchModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white transition"><i data-lucide="x" class="w-6 h-6"></i></button>
-        </div>
     </div>
     
     <div id="create-playlist-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[150] hidden flex items-center justify-center p-4">
@@ -259,53 +442,61 @@
             <button onclick="closeAddToPlaylistModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white transition"><i data-lucide="x" class="w-6 h-6"></i></button>
         </div>
     </div>
-
-    <div id="immersive-mode" onclick="exitImmersiveMode()" class="fixed inset-0 bg-black/90 backdrop-blur-xl z-[150] hidden flex-col items-center justify-center p-6 modal">
-        <div class="absolute top-6 left-6 flex items-center space-x-4">
-            <button onclick="exitImmersiveMode()" class="text-white/80 hover:text-white transition"><i data-lucide="chevron-down" class="w-8 h-8"></i></button>
-            <h2 class="text-xl font-semibold">In Riproduzione</h2>
-        </div>
-        
-        <div class="flex flex-col items-center space-y-12 max-w-lg w-full">
-            <div id="immersive-yt-player-container" class="w-full aspect-video rounded-3xl shadow-2xl shadow-ryzn-accent/30 overflow-hidden bg-black flex items-center justify-center">
-                 <img id="immersive-cover" src="" alt="Album Cover" class="w-full h-full object-cover">
-            </div>
-            
-            <div class="text-center">
-                <h3 id="immersive-title" class="text-4xl font-extrabold truncate">Titolo Brano</h3>
-                <p id="immersive-artist" class="text-xl text-gray-400 truncate">Artista</p>
-            </div>
-
-            <div id="progress-bar-immersive-container" class="w-full h-2 bg-white/20 rounded-full cursor-pointer relative">
-                <div id="progress-bar-immersive" class="h-2 accent-bg rounded-full" style="width: 0;"></div>
-            </div>
-
-            <div class="flex space-x-8 items-center">
-                <button id="loop-button-immersive" onclick="event.stopPropagation(); toggleLoop()" class="text-white/70 hover:text-white transition">
-                    <i data-lucide="repeat" class="w-8 h-8"></i>
-                </button>
-                <button onclick="event.stopPropagation(); skipBackward()" class="text-white/70 hover:text-white transition">
-                    <i data-lucide="skip-back" class="w-8 h-8 fill-current"></i>
-                </button>
-                <button onclick="event.stopPropagation(); togglePlayPause(true)" class="p-4 accent-bg rounded-full hover:scale-105 transition shadow-xl shadow-ryzn-accent/50 flex items-center justify-center">
-                    <span id="immersive-play-icon" class="text-4xl text-ryzn-bg animated-icon leading-none">▶️</span>
-                </button>
-                <button onclick="event.stopPropagation(); skipForward()" class="text-white/70 hover:text-white transition">
-                    <i data-lucide="skip-forward" class="w-8 h-8 fill-current"></i>
-                </button>
-                <button onclick="event.stopPropagation(); toggleLike()" id="like-button-immersive" class="text-white/70 hover:text-red-400 transition">
-                    <i data-lucide="heart" class="w-6 h-6 fill-current"></i>
-                </button>
-            </div>
-
-            <div class="flex items-center space-x-4 w-full justify-center">
-                <i data-lucide="volume" class="w-6 h-6 text-white/70"></i>
-                <input type="range" id="volume-slider-immersive" min="0" max="100" value="80" oninput="setVolume(this.value)" class="w-32 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-bg">
-            </div>
-        </div>
-    </div>
     
-    <div id="story-player-modal" class="fixed inset-0 bg-black z-[200] hidden flex items-center justify-center modal">
+    
+<div id="immersive-mode" class="fixed inset-0 bg-gradient-to-b from-[#0a1f33] via-[#112f44] to-[#0b1e2d] backdrop-blur-2xl z-[150] hidden flex flex-col items-center justify-center text-white p-6 modal">
+    
+    <div class="absolute top-6 left-6 flex items-center space-x-4">
+        <button onclick="exitImmersiveMode()" class="text-white/80 hover:text-white transition">
+            <i data-lucide="chevron-down" class="w-8 h-8"></i>
+        </button>
+        <h2 class="text-xl font-semibold text-white/70">In Riproduzione</h2>
+    </div>
+
+    <div class="flex flex-col items-center justify-center space-y-8 max-w-md w-full mt-8">
+        
+        <div id="immersive-yt-player-container" class="w-full max-w-xs aspect-square rounded-3xl overflow-hidden shadow-[0_0_30px_rgba(0,191,255,0.4)] bg-black/30">
+            <img id="immersive-cover" src="" alt="Album Cover" class="w-full h-full object-cover opacity-90">
+        </div>
+
+        <div class="text-center space-y-2">
+            <div class="marquee-container">
+                <h3 id="immersive-title" class="text-3xl font-extrabold bg-gradient-to-r from-white to-[#B3E0FF] bg-clip-text text-transparent">Titolo Brano</h3>
+            </div>
+            <p id="immersive-artist" class="text-lg text-white/70 truncate">Artista</p>
+        </div>
+
+        <div id="progress-bar-immersive-container" class="w-full h-2 bg-white/20 rounded-full cursor-pointer relative overflow-hidden">
+            <div id="progress-bar-immersive" class="h-2 rounded-full bg-gradient-to-r from-[#00BFFF] to-[#B3E0FF]" style="width: 0;"></div>
+        </div>
+
+        <div class="flex space-x-8 items-center justify-center mt-4">
+            <button id="loop-button-immersive" onclick="event.stopPropagation(); toggleLoop()" class="text-white/60 hover:text-white transition">
+                <i data-lucide="repeat" class="w-7 h-7"></i>
+            </button>
+            <button onclick="event.stopPropagation(); skipBackward()" class="text-white/80 hover:text-white transition">
+                <i data-lucide="skip-back" class="w-8 h-8"></i>
+            </button>
+            <button onclick="event.stopPropagation(); togglePlayPause(true)" class="p-5 rounded-full bg-gradient-to-r from-[#00BFFF] to-[#66D9FF] hover:scale-110 transition shadow-xl shadow-[#00BFFF]/40 flex items-center justify-center">
+                <span id="immersive-play-icon" class="text-4xl text-[#0a1f33] leading-none">▶️</span>
+            </button>
+            <button onclick="event.stopPropagation(); skipForward()" class="text-white/80 hover:text-white transition">
+                <i data-lucide="skip-forward" class="w-8 h-8"></i>
+            </button>
+            <button onclick="event.stopPropagation(); toggleLike()" id="like-button-immersive" class="text-white/70 hover:text-red-400 transition">
+                <i data-lucide="heart" class="w-6 h-6 fill-current"></i>
+            </button>
+        </div>
+
+        <div class="flex items-center space-x-3 w-full justify-center mt-4">
+            <i data-lucide="volume" class="w-5 h-5 text-white/70"></i>
+            <input type="range" id="volume-slider-immersive" min="0" max="100" value="80" oninput="setVolume(this.value)" class="w-32 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer accent-bg">
+        </div>
+
+    </div>
+</div>
+
+<div id="story-player-modal" class="fixed inset-0 bg-black z-[200] hidden flex items-center justify-center modal">
         <div class="absolute inset-0 flex items-center justify-center">
             <video id="story-video-player" class="w-full h-full object-cover" autoplay playsinline></video>
         </div>
@@ -340,7 +531,7 @@
         
         <header class="flex justify-between items-center mb-8">
             <div class="flex items-center space-x-8">
-                <a href="#" onclick="showSection('music')" class="cursor-pointer">
+                <a href="#" onclick="resetHomePage()" class="cursor-pointer">
                     <h1 class="logo-aura flex items-center space-x-2">
                         <i data-lucide="sparkles" class="w-7 h-7 accent-text fill-ryzn-accent/30"></i>
                         <span class="logo-text">Aura</span>
@@ -372,8 +563,10 @@
 
         <section id="music-section" class="section-page active">
             <h2 id="home-greeting" class="text-4xl font-extrabold mb-8 text-white">Buonasera. La tua Vibe è pronta.</h2>
-            <div id="home-widgets-container" class="space-y-10">
-                <p class="text-center text-gray-500">Caricamento in corso...</p>
+            
+             
+<div id="home-widgets-container" class="space-y-10">
+                <p class="text-center text-gray-400 col-span-full">Caricamento in corso...</p>
             </div>
         </section>
         <section id="library-section" class="section-page">
@@ -399,54 +592,26 @@
             <h2 class="text-3xl font-bold mb-6">Profilo Utente</h2>
             <div class="depth-glass p-6 rounded-xl max-w-lg space-y-4">
                 <p id="profile-info" class="text-lg font-semibold">Stato: Disconnesso</p>
-                <div id="vibe-score-display" class="text-xl accent-text font-bold">Vibe Score: 0/100</div>
+                <div id="vibe-score-display" class="text-xl accent-text font-bold">Stato: 0/100</div>
                 <button onclick="handleLogout()" class="px-4 py-2 bg-red-600 rounded-lg text-white font-bold hover:bg-red-700 transition">Disconnetti</button>
             </div>
         </section>
 
         <section id="stories-section" class="section-page">
              <div class="flex justify-between items-center mb-6">
-                 <h2 class="text-3xl font-bold">Storie Aura (Video)</h2>
+                 <h2 class="text-3xl font-bold">Aura story's</h2>
                  </div>
              
              <div id="stories-bubble-container" class="flex space-x-6 mb-10 overflow-x-auto pb-2 scrollbar-hide">
-                 <p id="no-stories-message" class="text-center p-4 text-gray-500">Nessuna storia video trovata nel manifesto remoto.</p>
+                 <p id="no-stories-message" class="text-center p-4 text-gray-500"><Nessuna Storia Disponibile></p>
              </div>
+             
              <hr class="border-white/10 my-10">
 
-            <h2 class="text-3xl font-bold mt-12 mb-6">📣 Eventi Aura Live</h2>
-            
-            <div id="aura-events-feed" class="space-y-6">
-                
-                <div class="depth-glass p-6 rounded-xl border-l-4 accent-border flex items-start space-x-4">
-                    <i data-lucide="rocket" class="w-8 h-8 accent-text flex-shrink-0"></i>
-                    <div>
-                        <h3 class="text-xl font-bold mb-1">Lancio Ufficiale Aura!</h3>
-                        <p class="text-sm text-gray-400 mb-2">🗓️ **31 Ottobre** - Un nuovo universo sonoro prende vita.</p>
-                        <p class="text-white/90">Celebra con noi il lancio ufficiale di Aura Music. Ascolta playlist esclusive e sblocca il badge "Early Adopter". La musica non sarà più la stessa.</p>
-                    </div>
-                </div>
-
-                <div class="depth-glass p-6 rounded-xl border-l-4 border-red-500 flex items-start space-x-4">
-                    <i data-lucide="gift" class="w-8 h-8 text-red-400 flex-shrink-0"></i>
-                    <div>
-                        <h3 class="text-xl font-bold mb-1">Xmas Music Contest 🎄</h3>
-                        <p class="text-sm text-gray-400 mb-2">🎶 Dicembre - Invia la tua cover o brano originale a tema natalizio.</p>
-                        <p class="text-white/90">Il vincitore sarà in rotazione esclusiva sulla homepage per tutto Gennaio. È il momento di far sentire la tua "Vibe Natalizia"!</p>
-                    </div>
-                </div>
-
-                <div class="depth-glass p-6 rounded-xl border-l-4 border-blue-500 flex items-start space-x-4">
-                    <i data-lucide="sparkles" class="w-8 h-8 text-blue-400 flex-shrink-0"></i>
-                    <div>
-                        <h3 class="text-xl font-bold mb-1">New Year Concert: L'Alba del Suono</h3>
-                        <p class="text-sm text-gray-400 mb-2">🎉 **1 Gennaio** - Streaming Live.</p>
-                        <p class="text-white/90">Un'esperienza immersiva unica con artisti misteriosi in esclusiva per la community di Aura. Preparati per un viaggio sonoro indimenticabile per iniziare l'anno.</p>
-                    </p>
-                </div>
-
-            </div>
-        </section>
+             <div id="new-releases-feed">
+                 <p class="text-center p-4 text-gray-500">Caricamento nuove uscite...</p>
+             </div>
+             </section>
 
         </div> 
     
@@ -492,7 +657,7 @@
 
     <script>
         // --- CONFIGURAZIONE YOUTUBE ---
-        const YOUTUBE_API_KEY = "AIzaSyBZ4jNJPWC4aBrE5N_iUw7Bga-HPlj_Uwo"; 
+        const YOUTUBE_API_KEY = "AIzaSyCPmdrMQSxFv-Cg3CpJ40gvtNeFl-55SAU"; 
         const YOUTUBE_API_BASE_URL = "https://www.googleapis.com/youtube/v3/";
         
         // --- Dati & Configurazione Locali ---
@@ -506,21 +671,27 @@
             "Invernale": "bg-blue-900/40 border-blue-600 text-blue-300", 
             "Party": "bg-red-900/40 border-red-600 text-red-300", 
             "Ambient": "bg-gray-800/40 border-gray-600 text-gray-300",
-            "Chill": "bg-cyan-900/40 border-cyan-600 text-cyan-300"
+            "Chill": "bg-cyan-900/40 border-cyan-600 text-cyan-300",
+            // NUOVI MOODS PER GRIGLIA 2x3
+            "Focus": "bg-yellow-900/40 border-yellow-600 text-yellow-300",
+            "Energia": "bg-pink-900/40 border-pink-600 text-pink-300"
         };
         
-        const ALL_MOODS = Object.keys(MOOD_STYLES);
+        const ALL_MOODS = Object.keys(MOOD_STYLES); // 6 moods totali
         const YOUTUBE_MOOD_QUERIES = {
-            "Invernale": "Christmas songs for kids", 
-            "Party": "best christmas party songs hits",
-            "Ambient": "fireplace christmas ambience with music",
-            "Chill": "lofi christmas beats"
+            "Invernale": "Musica Invernale", 
+            "Party": "Tecno Music",
+            "Ambient": "House Music",
+            "Chill": "lofi beats",
+            // NUOVE QUERY
+            "Focus": "Rap e trap ",
+            "Energia": "Europop tecno hardcore pop"
         };
         // -------------------------------------------------------------
         
         let currentTrackData = null;
         let ytPlayer = null; // Oggetto del Player IFrame di YouTube
-        let isPlayerReady = false; // Nuovo flag di stato per il player
+        let isPlayerReady = false; 
 
         let likedTracks = new Set();
         let userPlaylists = [];
@@ -560,9 +731,8 @@
                     'rel': 0,
                     'showinfo': 0,
                     'iv_load_policy': 3,
-                    'playsinline': 1,
+                    'playsinline': 1, // CRITICO: Permette riproduzione senza fullscreen su iOS
                     'enablejsapi': 1,
-                    'origin': window.location.origin,
                     'autoplay': 0 // Mantiene l'autoplay disabilitato per evitare blocchi
                 },
                 events: {
@@ -576,6 +746,15 @@
         function onPlayerReady(event) {
             console.log("YouTube Player Ready. Inizializzazione controlli.");
             isPlayerReady = true; 
+
+            // ** MODIFICA CRITICA PER MOBILE/BACKGROUND **
+            // Aggiunge l'attributo 'allow' all'IFrame per abilitare la riproduzione in background.
+            const iframe = document.getElementById('ytPlayer');
+            if (iframe && iframe.tagName === 'IFRAME') {
+                 // Setta gli attributi di policy di riproduzione nel browser (autoplay, Picture-in-Picture)
+                 iframe.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture');
+            }
+            // ********************************************
 
             setVolume(currentVolume); 
             
@@ -599,7 +778,7 @@
                 setupProgressInterval();
                 updateMediaSession();
                 playerBar.classList.add('active');
-                checkAndSkipAd(); // Controllo immediato all'avvio
+                // checkAndSkipAd(); // Controllo immediato all'avvio: Rimosso da qui, si affida all'intervallo
             } else if (state === YT.PlayerState.PAUSED) {
                  // *** MODIFICA: Icona rimossa qui. Ora cambia solo al click su togglePlayPause() ***
                 clearInterval(progressInterval);
@@ -615,7 +794,7 @@
                     // Il cambio traccia chiama playTrack() che aggiorna l'icona
                 }
             } else if (state === YT.PlayerState.BUFFERING) {
-                checkAndSkipAd(); // Controllo anche durante il buffering
+                // checkAndSkipAd(); // Controllo anche durante il buffering: Rimosso da qui, si affida all'intervallo
             }
         }
 
@@ -626,31 +805,33 @@
         }
 
         function checkAndSkipAd() {
-            if (!isPlayerReady || !ytPlayer || !ytPlayer.getAdState) return;
+            if (!isPlayerReady || !ytPlayer || !ytPlayer.getAdState || !ytPlayer.getPlayerState) return;
             
             const playerState = ytPlayer.getPlayerState();
-            const adState = ytPlayer.getAdState();
+            // L'API YT IFrame definisce AD_STATE: 1=PLAYING, 2=ENDED, 3=SKIPPABLE.
+            // Purtroppo, non c'è una costante pubblica per AD_STATE_PLAYING. Usiamo lo stato del player e un controllo
+            const adState = ytPlayer.getAdState(); 
             
-            // Se lo stato dell'annuncio è diverso da AD_ENDED (2) e non è in stato UNSTARTED (-1)
-            // e il player è in riproduzione o buffering, significa che è in corso o sta per iniziare un annuncio.
-            if (adState !== YT.AdState.AD_ENDED && adState !== YT.AdState.UNSTARTED) {
-                console.log("Annuncio rilevato o imminente. Silenzio.");
+            // Lo stato AD_ENDED (2) indica che non c'è un annuncio. 
+            // Se AD_ENDED non è lo stato attuale, c'è un annuncio in corso o in queue (Stato 1=PLAYING/3=SKIPPABLE).
+            const isAdPlaying = adState !== 2 && (playerState === YT.PlayerState.PLAYING || playerState === YT.PlayerState.BUFFERING); 
+
+            if (isAdPlaying) {
+                // console.log("Annuncio rilevato o imminente. Silenzia e tento il salto.");
                 
-                // Silenzia e cerca di saltare avanti di 5 secondi se possibile
-                // (Molte API IFrame lo impediscono, ma proviamo per le ads skippable)
+                // Silenzia
                 ytPlayer.setVolume(0); 
                 
-                // Prova a saltare l'annuncio se non è un pre-roll non skippable
-                if (playerState === YT.PlayerState.PLAYING || playerState === YT.PlayerState.BUFFERING) {
-                    try {
-                        ytPlayer.seekTo(ytPlayer.getCurrentTime() + 5, true); 
-                    } catch (e) {
-                         // Ignora l'errore se il seekTo non è permesso durante l'ad
-                    }
+                // Tenta di saltare avanti di 5 secondi se possibile (utile per gli annunci skippable o i pre-roll corti)
+                try {
+                    ytPlayer.seekTo(ytPlayer.getCurrentTime() + 5, true); 
+                } catch (e) {
+                     // console.log("SeekTo fallito durante l'ad, probabile annuncio non skippable.");
+                     // Ignora l'errore se il seekTo non è permesso durante l'ad
                 }
             } else {
-                 // Nessun annuncio, ripristina il volume
-                 if (ytPlayer.getVolume() === 0) {
+                 // Nessun annuncio. Se il volume è a zero a causa del blocco, lo ripristina
+                 if (ytPlayer.getVolume() === 0 && currentVolume > 0) {
                      ytPlayer.setVolume(currentVolume);
                  }
             }
@@ -671,19 +852,19 @@
             }
 
             let url;
-            if (filter === 'Trending') {
-                // Tira giù molti risultati (max 50) per popolare tutti i 5 widget
-                url = `${YOUTUBE_API_BASE_URL}videos?part=snippet,contentDetails&chart=mostPopular&videoCategoryId=10&regionCode=IT&maxResults=50&key=${YOUTUBE_API_KEY}`;
-            } else {
-                // Se è un mood, fai la ricerca specifica (e sovrascrivi la home temporaneamente)
-                const query = YOUTUBE_MOOD_QUERIES[filter] || 'music official video';
+            if (filter === 'Trending' || ALL_MOODS.includes(filter)) {
+                 // Per Trending e Mood, usa una query di ricerca per un set dinamico di dati (50 risultati)
+                const query = (filter === 'Trending') ? 'musica in tendenza' : YOUTUBE_MOOD_QUERIES[filter];
                 url = `${YOUTUBE_API_BASE_URL}search?part=snippet&q=${encodeURIComponent(query)}&type=video&videoCategoryId=10&maxResults=50&key=${YOUTUBE_API_KEY}`;
+            } else {
+                 // Fallback
+                 url = `${YOUTUBE_API_BASE_URL}videos?part=snippet,contentDetails&chart=mostPopular&videoCategoryId=10&regionCode=IT&maxResults=50&key=${YOUTUBE_API_KEY}`;
             }
 
             try {
                 const response = await fetch(url);
                 if (!response.ok) {
-                    throw new Error(`YouTube API Error! Status: ${response.status}`);
+                    throw new Error(`Error! Status: ${response.status}`);
                 }
                 const data = await response.json();
 
@@ -703,12 +884,12 @@
                 
                 AURA_MAP = results;
                 
-                // Dopo il caricamento iniziale o del filtro, mostra i widget o i risultati
+                // Dopo il caricamento, mostra i widget
                 renderHomePageWidgets(); 
 
             } catch (error) {
-                console.error("Errore nel recupero dei brani da YouTube:", error);
-                container.innerHTML = `<p class="text-center p-4 text-red-400 col-span-full">Errore nel caricamento: ${error.message}. Verifica la chiave API.</p>`;
+                console.error("SERVER IN AGGIORNAMENTO:", error);
+                container.innerHTML = `<p class="text-center p-4 text-red-400 col-span-full">Server in aggiornamento: ${error.message}. Ricollegati piu tardi.</p>`;
                 AURA_MAP = [];
             }
         }
@@ -727,7 +908,19 @@
             return moods[Math.floor(Math.random() * moods.length)];
         }
 
-        // --- Funzioni di Autenticazione ---
+        // --- Gestione Reset Home ---
+        window.resetHomePage = function() {
+            // Riporta il filtro allo stato iniziale (Trending)
+            activeFilter = 'Trending';
+            // Ricarica i brani di tendenza da YouTube
+            fetchTracks('Trending'); 
+            // Mostra la sezione Music (Home)
+            showSection('music'); 
+            // Resetta lo scorrimento della pagina
+            window.scrollTo(0, 0); 
+        }
+
+        // --- Funzioni di Autenticazione (OMESSE PER BREVITÀ, RIMANGONO UGUALI) ---
         function openAuthModal(mode) {
              document.getElementById('auth-modal').classList.remove('hidden');
              switchAuthMode(mode);
@@ -769,7 +962,7 @@
                 showToast("Registrazione Eseguita!", 'success');
             } else {
                 loggedInUser = { email: email, vibeScore: 50 };
-                showToast("Accesso Eseguito!", 'success');
+                showToast("Login Eseguito!", 'success');
             }
             
             saveLocalData();
@@ -781,9 +974,10 @@
             loggedInUser = null;
             saveLocalData();
             updateAuthUI(null);
-            showToast("Disconnessione Eseguita.", 'info');
+            showToast("Logout Eseguito.", 'info');
             showSection('music'); // Torna alla home
         }
+
 
         /**
          * Funzioni di riproduzione del player YouTube
@@ -795,6 +989,7 @@
             
             if (isPlayerReady) {
                 ytPlayer.loadVideoById(trackId);
+                // Il player imposterà il volume predefinito, poi checkAndSkipAd() lo gestirà.
             } else {
                 showToast("Player in fase di caricamento. Riprova tra un attimo.", 'info');
             }
@@ -803,12 +998,12 @@
             playerBar.classList.add('active');
             
             // *** MODIFICA: Aggiornamento manuale icona quando si carica una nuova traccia ***
-            togglePlayIcon(false); // Assume che stia per partire (mostra ⏹️)
+            togglePlayIcon(false); // Assume che stia per partire (mostra ⏯)
         }
 
         window.togglePlayPause = function() {
             if (!isPlayerReady) {
-                showToast("Il player YouTube non è pronto.", 'error');
+                showToast("Riprova.", 'error');
                 return;
             }
             
@@ -826,12 +1021,12 @@
             if (playerState === YT.PlayerState.PLAYING) {
                 ytPlayer.pauseVideo();
                 // *** MODIFICA: CAMBIO ICONA SUBITO AL CLICK - Stato successivo: PAUSA ***
-                togglePlayIcon(true); // Imposta su PAUSA (mostra ▶️)
+                togglePlayIcon(true); // Imposta su PAUSA (mostra  ▶.)
             } else if (playerState === YT.PlayerState.PAUSED || playerState === YT.PlayerState.CUED) {
                 // Tentativo di riproduzione con gestione del blocco Autoplay
                 const attemptPlay = ytPlayer.playVideo();
                 // *** MODIFICA: CAMBIO ICONA SUBITO AL CLICK - Stato successivo: PLAY ***
-                togglePlayIcon(false); // Imposta su PLAY (mostra ⏹️)
+                togglePlayIcon(false); // Imposta su PLAY (mostra ⏯)
                 if (attemptPlay && typeof attemptPlay.catch === 'function') {
                     attemptPlay.catch(e => {
                         showToast("Riproduzione manuale richiesta.", 'info');
@@ -841,7 +1036,7 @@
                 // Se è ENDED o CUED, riavvia
                 playTrack(currentTrackData.id, true);
                 // *** MODIFICA: CAMBIO ICONA SUBITO AL CLICK - Stato successivo: PLAY ***
-                togglePlayIcon(false); // Imposta su PLAY (mostra ⏹️)
+                togglePlayIcon(false); // Imposta su PLAY (mostra ⏯)
             }
         }
 
@@ -863,8 +1058,11 @@
         window.setVolume = function(volume) {
             currentVolume = parseInt(volume);
             if (ytPlayer && isPlayerReady) {
-                ytPlayer.setVolume(currentVolume);
-                // Aggiorna tutti gli slider se ne abbiamo più di uno (es. player bar e immersive)
+                // Applica il volume solo se l'adblock non lo ha silenziato
+                if (ytPlayer.getVolume() !== 0) { 
+                    ytPlayer.setVolume(currentVolume);
+                }
+                // Aggiorna tutti gli slider
                 if(volumeSlider) volumeSlider.value = currentVolume;
                 if(volumeSliderImmersive) volumeSliderImmersive.value = currentVolume;
             }
@@ -937,9 +1135,20 @@
             playerArtist.textContent = track.artist;
             playerCover.src = track.cover;
 
-            immersiveTitle.textContent = track.title;
+            // Logica Marquee per il titolo del player immersivo
             immersiveArtist.textContent = track.artist;
             immersiveCover.src = track.cover;
+            
+            const titleElement = document.getElementById('immersive-title');
+            titleElement.textContent = track.title;
+            
+            // Se il titolo è troppo lungo, applica la classe marquee
+            // 35 caratteri è una soglia euristica per titoli che potrebbero non stare su una riga
+            if (track.title.length > 35) {
+                titleElement.classList.add('marquee-text');
+            } else {
+                titleElement.classList.remove('marquee-text');
+            }
             
             vibeScoreDisplay.textContent = `Vibe Score: ${track.vibe}/100`;
 
@@ -949,17 +1158,15 @@
             // Forza il re-render delle icone Lucide (critico per animazioni)
             lucide.createIcons();
             
-            // *** MODIFICA: L'aggiornamento dell'icona è stato spostato in playTrack() e togglePlayPause() ***
-            
             // Aggiorna la Media Session per il controllo esterno
             updateMediaSession();
         }
 
         // START: FUNZIONE PER IL CAMBIO EMOJI (RESTANO INVARIATE)
         function togglePlayIcon(isPaused) {
-            // isPaused = true -> Player in pausa, mostra Play emoji (▶️)
-            // isPaused = false -> Player in riproduzione, mostra Stop emoji (⏹️)
-            const emoji = isPaused ? '▶️' : '⏹️'; 
+            // isPaused = true -> Player in pausa, mostra Play emoji (▶)
+            // isPaused = false -> Player in riproduzione, mostra Stop emoji (⏯)
+            const emoji = isPaused ? '▶' : '⏯'; 
 
             if (playIcon) {
                 // Aggiorniamo il contenuto dell'elemento <span>
@@ -985,7 +1192,7 @@
             }
         }
         
-        // --- Gestione Stato Locale ---
+        // --- Gestione Stato Locale (OMESSE PER BREVITÀ, RIMANGONO UGUALI) ---
         function saveLocalData() {
             localStorage.setItem('likedTracks', JSON.stringify(Array.from(likedTracks)));
             localStorage.setItem('userPlaylists', JSON.stringify(userPlaylists));
@@ -1061,6 +1268,7 @@
                 renderPlaylists();
             } else if (sectionId === 'stories') {
                 renderStories();
+                renderNewReleases(); // NUOVO: Chiama il rendering del feed di nuove uscite
             }
         }
 
@@ -1101,11 +1309,50 @@
                 buttonImmersive.classList.toggle('text-red-400', isLiked);
                 buttonImmersive.classList.toggle('text-white/70', !isLiked);
             }
+            // Forza il re-render di tutte le icone 'heart' nel DOM
+            lucide.createIcons();
         }
 
         // ====================================================================
-        // FUNZIONI DI WIDGET RENDERING (Nuove per stile YouTube Music)
+        // FUNZIONI DI WIDGET RENDERING
         // ====================================================================
+        
+        /**
+         * Attiva la condivisione nativa del brano (navigator.share).
+         */
+        window.shareNewRelease = async function(trackId) {
+            const track = AURA_MAP.find(t => t.id === trackId);
+            if (!track) {
+                showToast("Dati del brano non disponibili per la condivisione.", 'error');
+                return;
+            }
+
+            // Simula l'URL del brano usando l'ID di YouTube
+            const shareUrl = `https://youtu.be/${track.youtubeId}`;
+            const shareTitle = `Ascolta "${track.title}" di ${track.artist} su Aura Music!`;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: shareTitle,
+                        text: `Nuova Uscita: ${track.title} - ${track.artist}`,
+                        url: shareUrl,
+                    });
+                    // console.log('Condivisione riuscita.');
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        // console.error('Errore durante la condivisione:', error);
+                        showToast("Condivisione annullata o fallita.", 'info');
+                    }
+                }
+            } else {
+                // Fallback per browser non supportati (es. desktop)
+                navigator.clipboard.writeText(shareUrl)
+                    .then(() => showToast("URL del brano copiato negli appunti!", 'success'))
+                    .catch(() => showToast("Impossibile copiare l'URL.", 'error'));
+            }
+        }
+        
 
         /**
          * Genera il markup per un singolo brano in un carosello.
@@ -1113,7 +1360,7 @@
         function getTrackElement(track) {
             return `
                 <div onclick="playTrack('${track.id}')" class="widget-row-item cursor-pointer hover:scale-[1.03] transition-transform">
-                    <img src="${track.cover}" alt="${track.title}" class="w-full h-auto aspect-square rounded-xl object-cover shadow-lg mb-2">
+                    <img src="${track.cover}" alt="${track.title}" class="w-14 h-14 rounded-xl object-cover shadow-md flex-shrink-0 mr-3">
                     <p class="text-sm font-semibold text-white truncate">${track.title}</p>
                     <p class="text-xs text-gray-400 truncate">${track.artist}</p>
                 </div>
@@ -1127,8 +1374,8 @@
             if (!track) return '';
             const styleClass = MOOD_STYLES[track.mood] || 'bg-gray-700/40 border-gray-500 text-gray-300';
             return `
-                <div onclick="playTrack('${track.id}')" class="widget-quick-access depth-glass p-3 rounded-xl cursor-pointer transition hover:bg-white/10 border-l-4 ${styleClass} shadow-md">
-                    <img src="${track.cover}" alt="${track.title}" class="w-12 h-12 rounded-md object-cover flex-shrink-0 mr-3">
+                <div onclick="playTrack('${track.id}')" class="widget-quick-access depth-glass p-4 rounded-2xl cursor-pointer transition hover:scale-[1.03] hover:bg-white/10 border-l-4 shadow-lg shadow-black/30 bg-gradient-to-br from-white/5 to-white/0">
+                    <img src="${track.cover}" alt="${track.title}" class="w-14 h-14 rounded-xl object-cover shadow-md flex-shrink-0 mr-3">
                     <div class="truncate">
                         <p class="text-white font-bold truncate">${track.title}</p>
                         <p class="text-sm text-gray-400 truncate">${track.artist}</p>
@@ -1157,10 +1404,13 @@
          */
         function getMoodIcon(mood) {
             switch (mood) {
-                case "Invernale": return "🎄"; // MODIFICATO: Albero di Natale Emoji
+                case "Invernale": return "🎄"; // Albero di Natale Emoji
                 case "Party": return "sparkles";
                 case "Ambient": return "cloud-drizzle";
                 case "Chill": return "snowflake";
+                // NUOVI MOODS
+                case "Focus": return "brain"; 
+                case "Energia": return "bolt"; 
                 default: return "music";
             }
         }
@@ -1182,7 +1432,7 @@
                     iconHtml = `<span class="text-3xl">${iconOrEmoji}</span>`;
                 }
                 
-                // depth-glass e riquadro (COME RICHIESTO)
+                // *** IMPORTANTE: Usa showMoodTracks per caricare i brani del mood, ma ripristina la vista Home
                 return `
                     <div onclick="showMoodTracks('${mood}')" class="depth-glass ${styleClass} p-4 rounded-xl cursor-pointer transition hover:scale-[1.03] border-2 shadow-lg flex flex-col items-center justify-center text-center space-y-2 min-h-[120px]">
                         ${iconHtml}
@@ -1191,6 +1441,107 @@
                 `;
             }).join('');
         }
+        
+        /**
+         * Genera un post "Nuova Uscita" in stile Instagram.
+         */
+        function getNewReleasePost(track, username, postDate, caption) {
+            // Uso il colore del mood del brano per l'accento
+            const accentColor = track.color || '#00BFFF';
+            
+            // Icona temporanea per il profilo
+            const profileEmoji = username.startsWith('Aura') ? '✨' : '🎤';
+            
+            const isLiked = likedTracks.has(track.id);
+
+            return `
+                <div class="new-release-post bg-black/50 depth-glass rounded-xl overflow-hidden mb-8 border border-white/10 shadow-2xl">
+                    
+                    <div class="flex items-center p-4">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-xl bg-gray-700/50 mr-3 border-2" style="border-color: ${accentColor};">
+                            <span>${profileEmoji}</span>
+                        </div>
+                        <div class="flex-grow">
+                            <p class="font-bold text-white truncate">${username}</p>
+                            <p class="text-xs text-gray-400">Nuova Uscita · ${postDate}</p>
+                        </div>
+                        <button onclick="showToast('Altre opzioni per ${track.title}', 'info')" class="text-gray-400 hover:text-white transition p-1">
+                            <i data-lucide="more-horizontal" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    <div class="relative w-full aspect-square" onclick="playTrack('${track.id}')">
+                        <img src="${track.cover}" alt="Cover di ${track.title}" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition duration-300">
+                            <i data-lucide="play-circle" class="w-20 h-20 text-white opacity-80 fill-current"></i>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center p-3 space-x-4">
+                        <button onclick="event.stopPropagation(); toggleLike('${track.id}')" class="text-white/70 hover:text-red-400 transition ${isLiked ? 'text-red-400' : ''}">
+                            <i data-lucide="heart" class="w-7 h-7 fill-current"></i>
+                        </button>
+                        <button onclick="showToast('Commenti non abilitati', 'info')" class="text-white/70 hover:text-white transition">
+                            <i data-lucide="message-circle" class="w-7 h-7"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); shareNewRelease('${track.id}')" class="text-white/70 hover:text-white transition">
+                            <i data-lucide="send" class="w-7 h-7"></i>
+                        </button>
+                        <button onclick="openAddToPlaylistModal('${track.id}')" class="ml-auto text-white/70 hover:accent-text transition">
+                             <i data-lucide="list-plus" class="w-7 h-7"></i>
+                        </button>
+                    </div>
+
+                    <div class="p-4 pt-0">
+                        <p class="text-sm font-semibold mb-1">${track.artist}</p>
+                        <p class="text-white text-lg font-bold">${track.title}</p>
+                        <p class="text-sm text-gray-300 mt-2">${caption}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * Renderizza i post delle nuove uscite musicali.
+         */
+        function renderNewReleases() {
+            const container = document.getElementById('new-releases-feed');
+            if (!container) return;
+            
+            // Prendiamo i primi 5 brani da AURA_MAP per simulare le nuove uscite.
+            const newReleaseTracks = AURA_MAP.slice(0, 5); 
+
+            if (newReleaseTracks.length === 0) {
+                container.innerHTML = '<p class="text-center p-4 text-gray-500">Nessuna nuova uscita da mostrare.</p>';
+                return;
+            }
+            
+            // Dati fittizi per i post Instagram
+            const postData = [
+                { username: "Aura Ai", date: "1h fa", caption: "Finalmente qui! La nostra nuova Vibe ti aspetta. Ascolta subito il brano completo!" },
+                { username: newReleaseTracks[1]?.artist || "Artista Anonimo", date: "3h fa", caption: "Vibrazioni Glaciali per questo inverno. L'ultimo singolo è su Aura Music." },
+                { username: "Community Picks", date: "1g fa", caption: "Scelto dalla nostra community! Questo brano è un must-have." },
+                { username: newReleaseTracks[3]?.artist || "Beat Maker", date: "2g fa", caption: "Il nuovo EP è fuori ora! Link in bio. #NuovaMusica #AuraVibe" },
+                { username: "Aura Recommends", date: "3g fa", caption: "Da non perdere: un viaggio sonoro mozzafiato. Trovato in esclusiva su Aura." },
+            ];
+            
+            let feedHtml = '';
+            
+            newReleaseTracks.forEach((track, index) => {
+                const data = postData[index] || postData[0];
+                feedHtml += getNewReleasePost(track, data.username, data.date, data.caption);
+            });
+            
+            container.innerHTML = `
+                <h2 class="text-3xl font-bold mt-12 mb-6 border-b border-white/10 pb-4">🌟 Nuove Uscite Musicali</h2>
+                <div class="max-w-xl mx-auto"> ${feedHtml}
+                </div>
+            `;
+            
+            // Aggiorna le icone (cruciale per il pulsante 'heart' e 'send')
+            lucide.createIcons();
+        }
+
 
         /**
          * Ridisegna l'intera home page con il layout a widget.
@@ -1198,13 +1549,19 @@
         window.renderHomePageWidgets = function() {
             const container = document.getElementById('home-widgets-container');
             if (!container) return;
-
-            // Aggiorna il saluto
-            const currentHour = new Date().getHours();
-            let greeting = "Buonasera.";
-            if (currentHour < 12) greeting = "Buongiorno.";
-            else if (currentHour < 18) greeting = "Buon Pomeriggio.";
-            document.getElementById('home-greeting').textContent = `${greeting} La tua Vibe è pronta.`;
+            
+            // Imposta l'intestazione corretta per la Home
+            let greeting = "La tua Vibe è pronta.";
+            if (activeFilter !== 'Trending') {
+                 // Se stiamo visualizzando i brani filtrati per un Mood (Vibe), cambiamo l'intestazione
+                 greeting = `Vibrazioni per: ${activeFilter}`;
+            } else {
+                 const currentHour = new Date().getHours();
+                 if (currentHour < 12) greeting = "Buongiorno. La tua Vibe è pronta.";
+                 else if (currentHour < 18) greeting = "Buon Pomeriggio. La tua Vibe è pronta.";
+                 else greeting = "Buonasera. La tua Vibe è pronta.";
+            }
+            document.getElementById('home-greeting').textContent = greeting;
 
             if (AURA_MAP.length === 0) {
                  container.innerHTML = '<p class="text-center p-4 text-gray-500">Nessun brano trovato. Prova a ricaricare o a cercare.</p>';
@@ -1212,28 +1569,45 @@
             }
 
             let allWidgetsHtml = '';
+            
+            // Filtra AURA_MAP in base all'activeFilter se non è 'Trending'
+            const filteredTracks = activeFilter === 'Trending' 
+                ? AURA_MAP
+                : AURA_MAP.filter(t => t.mood === activeFilter);
+            
+            // Se l'activeFilter non è 'Trending' e i filtri sono vuoti, torniamo a 'Trending'
+            if (activeFilter !== 'Trending' && filteredTracks.length === 0) {
+                 // Torna a Trending se il filtro non ha dato risultati (e carica)
+                 activeFilter = 'Trending';
+                 fetchTracks('Trending');
+                 return; 
+            }
+            
+            const baseTracks = filteredTracks.length > 0 ? filteredTracks : AURA_MAP;
 
-            // WIDGET 1: Brani Recenti/Quick Access (Due per riga, usa i primi 4 brani)
-            const quickAccessTracks = AURA_MAP.slice(0, 4);
+            // WIDGET 1: Brani Recenti/Quick Access (Ora i primi 6 brani)
+            const quickAccessTracks = baseTracks.slice(0, 6); // MODIFICA: Da 4 a 6
             const quickAccessHtml = quickAccessTracks.map(getQuickAccessWidget).join('');
-            allWidgetsHtml += createWidgetBlock('Accesso Veloce', 'I brani recenti e i tuoi preferiti in un click.', quickAccessHtml, 'flex flex-wrap gap-4');
+            // La classe 'flex flex-wrap gap-4' sul contenitore genitore gestisce le due colonne e le 3 linee.
+            allWidgetsHtml += createWidgetBlock('Accesso Veloce', 'I brani recenti e i tuoi preferiti in un click.', quickAccessHtml, 'grid grid-cols-2 sm:grid-cols-3 gap-4');
 
-            // WIDGET 2: Mood Grid (Due colonne)
+            // WIDGET 2: Mood Grid (Griglia dei mood, sempre visibile)
             const moodGridHtml = getMoodGridHtml();
-            allWidgetsHtml += createWidgetBlock('Scegli la Vibe', 'Seleziona il tuo mood attuale e inizia ad ascoltare.', moodGridHtml, 'grid grid-cols-2 gap-4'); // Rimosso sm:grid-cols-4
+            // La classe 'grid grid-cols-2 gap-4' assicura un layout 2 a 2 per le 6 Vibes
+            allWidgetsHtml += createWidgetBlock('Scegli la Vibe', 'Seleziona il tuo mood attuale e inizia ad ascoltare.', moodGridHtml, 'grid grid-cols-2 gap-4'); 
 
             // WIDGET 3: Deep Dive Discovery (Horizontal Carousel)
-            const deepDiveTracks = AURA_MAP.slice(6, 16);
+            const deepDiveTracks = baseTracks.slice(6, 16); // Parte dal sesto brano
             const deepDiveHtml = deepDiveTracks.map(getTrackElement).join('');
             allWidgetsHtml += createWidgetBlock('Deep Dive Discovery', 'Nuove vibrazioni solo per te.', deepDiveHtml, 'horizontal-scroll');
 
             // NUOVO WIDGET 4: Rilassati con il nostro Flow (Horizontal Carousel)
-            const moodMusicTracks = AURA_MAP.slice(16, 26);
+            const moodMusicTracks = baseTracks.slice(16, 26);
             const moodMusicHtml = moodMusicTracks.map(getTrackElement).join('');
             allWidgetsHtml += createWidgetBlock('Rilassati con il nostro Flow', 'Playlist curate per il tuo stato d\'animo.', moodMusicHtml, 'horizontal-scroll');
 
             // NUOVO WIDGET 5: Ritorno al Passato (Horizontal Carousel)
-            const retroTracks = AURA_MAP.slice(26, 36);
+            const retroTracks = baseTracks.slice(26, 36);
             const retroHtml = retroTracks.map(getTrackElement).join('');
             allWidgetsHtml += createWidgetBlock('Ritorno al Passato', 'I successi che non smettono di emozionare.', retroHtml, 'horizontal-scroll');
 
@@ -1242,25 +1616,24 @@
             lucide.createIcons();
         }
 
+        /**
+         * Funzione per mostrare i brani di un Mood specifico. 
+         * Ora chiama fetchTracks che a sua volta chiama renderHomePageWidgets per aggiornare i contenuti.
+         */
         window.showMoodTracks = function(mood) {
-            activeFilter = mood;
-            if (AURA_MAP.length === 0) {
-                // Se non ci sono brani, li carica con la query del mood
-                fetchTracks(mood);
-            } else {
-                // Altrimenti (es. se "Trending" è chiamato con questo filtro), ricarica la home completa
-                renderHomePageWidgets();
-            }
+            activeFilter = mood; // Imposta il filtro attivo
+            fetchTracks(mood);    // Forza il ricaricamento dei dati con la query del mood
+            // La funzione renderHomePageWidgets() verrà chiamata al termine di fetchTracks()
         }
 
         // ====================================================================
-        // FUNZIONI PRE-ESISTENTI (Mantengono la loro funzionalità)
+        // FUNZIONI PRE-ESISTENTI (OMESSE PER BREVITÀ, RIMANGONO UGUALI)
         // ====================================================================
         
         function getLikedTrackElement(track) {
             return `
                 <div onclick="playTrack('${track.id}')" class="depth-glass p-3 rounded-xl flex items-center space-x-4 cursor-pointer hover:bg-white/10 transition">
-                    <img src="${track.cover}" alt="${track.title}" class="w-12 h-12 rounded-md object-cover flex-shrink-0">
+                    <img src="${track.cover}" alt="${track.title}" class="w-14 h-14 rounded-xl object-cover shadow-md flex-shrink-0 mr-3">
                     <div class="flex-grow truncate">
                         <p class="text-white font-bold truncate">${track.title}</p>
                         <p class="text-gray-400 text-sm truncate">${track.artist}</p>
@@ -1388,7 +1761,7 @@
 
                     return `
                         <div class="depth-glass p-3 rounded-xl flex items-center space-x-4 cursor-pointer hover:bg-white/10 transition">
-                            <img src="${track.cover}" alt="${track.title}" class="w-10 h-10 rounded-md object-cover flex-shrink-0">
+                            <img src="${track.cover}" alt="${track.title}" class="w-14 h-14 rounded-xl object-cover shadow-md flex-shrink-0 mr-3">
                             <div onclick="playTrack('${trackId}')" class="flex-grow truncate">
                                 <p class="text-white font-bold truncate">${track.title}</p>
                                 <p class="text-gray-400 text-sm truncate">${track.artist}</p>
@@ -1569,7 +1942,8 @@
             // Sovrascrive temporaneamente AURA_MAP con i brani della playlist per la riproduzione in sequenza
             AURA_MAP = playableTracks;
             playTrack(playableTracks[0].id);
-            showToast(`Riproduzione Sessione: ${playlist.name}`, 'info');
+            showSection('music'); // Torna alla home per un'esperienza più pulita
+            showToast(`Riproduzione Playlist: ${playlist.name}`, 'info');
 
             // Ricarica AURA_MAP originale dopo un timeout (o al cambio di sezione) per ripristinare i trending
             setTimeout(() => {
@@ -1577,7 +1951,7 @@
             }, 60000);
         }
 
-        // --- Logica Storie (Video) ---
+        // --- Logica Storie (Video) (OMESSE PER BREVITÀ, RIMANGONO UGUALI) ---
         async function loadRemoteStories() {
             try {
                 const response = await fetch(STORIES_MANIFEST_URL);
@@ -1846,5 +2220,146 @@
 
         document.addEventListener('DOMContentLoaded', initializeAppContent);
     </script>
+
+<script>
+/* Ambient audio autoplay + pause when main YouTube starts */
+(function(){
+  const ambient = document.getElementById('ambient-audio');
+  // try to autoplay (may be blocked on some browsers)
+  function tryPlayAmbient(){
+    if(!ambient) return;
+    ambient.volume = 0.28;
+    const p = ambient.play();
+    if (p && typeof p.catch === 'function') {
+      p.catch(()=>{/* autoplay blocked, will play on first user gesture */});
+    }
+  }
+  // Attempt play after short timeout to prioritize user gesture scenarios
+  window.addEventListener('load', () => {
+    setTimeout(tryPlayAmbient, 300);
+  });
+
+  // Pause ambient when the main YouTube player starts playing
+  // The main player exposes ytPlayer; we watch for state changes if available
+  function onYTStateChangeHandler() {
+    try {
+      if (window.ytPlayer && typeof window.ytPlayer.getPlayerState === 'function') {
+        const state = window.ytPlayer.getPlayerState();
+        // YT.PlayerState.PLAYING === 1
+        if (state === 1) {
+          if (!ambient.paused) ambient.pause();
+        } else {
+          // resume only if ambient was playing before and user hasn't manually paused it
+          // we avoid forcing play on mobile browsers; attempt play but ignore failures
+          try { ambient.play().catch(()=>{}); } catch(e){}
+        }
+      }
+    } catch(e){}
+  }
+  // Poll for presence of global ytPlayer and attach to its onStateChange if possible
+  let ytPoll = setInterval(()=>{
+    if(window.ytPlayer && typeof window.ytPlayer.addEventListener === 'function') {
+      // Some YT API instances don't expose addEventListener; instead observe via interval below
+      clearInterval(ytPoll);
+    }
+    // fallback: set up an interval watcher to pause/resume ambient appropriately
+  }, 500);
+
+  // Observe changes via interval safely
+  setInterval(onYTStateChangeHandler, 700);
+
+  // Also pause ambient when any interactively started audio/video element plays on the page
+  document.addEventListener('play', (e) => {
+    if (e.target && e.target.tagName === 'VIDEO') {
+      if (!ambient.paused) ambient.pause();
+    }
+  }, true);
+
+  // Provide global helpers to open banner links (user can replace with real handlers)
+  window.openRyznLaunch = function() {
+    showToast('Apertura pagine evento Ryzn (sostituire con link reale).', 'info');
+  };
+  window.openRyznRules = function() {
+    showToast('Mostra regolamento Ryzn XMAS Contest (sostituire con contenuti reali).', 'info');
+  };
+
+  // Allow user to toggle ambient with a simple keyboard shortcut (M) for convenience
+  window.addEventListener('keydown', (ev) => {
+    if (ev.key && ev.key.toLowerCase() === 'm') {
+      if (!ambient) return;
+      if (ambient.paused) {
+        ambient.play().catch(()=>{ showToast('Autoplay bloccato: interagisci con la pagina per ascoltare.', 'info'); });
+      } else {
+        ambient.pause();
+      }
+    }
+  });
+
+})();
+
+/* Simple snow particle system drawn into canvas (lightweight) */
+(function(){
+  const canvas = document.getElementById('snow-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let width, height, particles = [];
+
+  function resize() {
+    width = canvas.width = Math.floor(window.innerWidth * devicePixelRatio);
+    height = canvas.height = Math.floor(window.innerHeight * devicePixelRatio);
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+  }
+  function initParticles() {
+    particles = [];
+    const count = Math.round((window.innerWidth / 100) * 4); // adaptive count
+    for(let i=0;i<count;i++){
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height - height,
+        r: (Math.random()*2 + 0.8) * devicePixelRatio,
+        vx: (Math.random()*0.6 - 0.3) * devicePixelRatio,
+        vy: (Math.random()*1.2 + 0.6) * devicePixelRatio,
+        o: 0.6 + Math.random()*0.4
+      });
+    }
+  }
+  function step() {
+    ctx.clearRect(0,0,width,height);
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    for(const p of particles){
+      p.x += p.vx;
+      p.y += p.vy;
+      if(p.y > height + 50) {
+        p.y = -10 - Math.random()*height*0.2;
+        p.x = Math.random()*width;
+      }
+      if(p.x > width + 20) p.x = -20;
+      if(p.x < -20) p.x = width + 20;
+      ctx.globalAlpha = p.o;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(step);
+  }
+
+  function start() {
+    resize();
+    initParticles();
+    step();
+  }
+
+  window.addEventListener('resize', () => {
+    resize();
+    initParticles();
+  });
+
+  // start after short delay to avoid blocking initial paint
+  setTimeout(start, 200);
+})();
+</script>
+
 </body>
 </html>
