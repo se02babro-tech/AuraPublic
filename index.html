@@ -164,7 +164,7 @@
             display: none;  
         }
         
-        /* Piped Player Nascosto per Audio */
+        /* invidious Player Nascosto per Audio */
         #yt-player-container {
             position: absolute;
             top: -9999px; 
@@ -175,7 +175,7 @@
             opacity: 0;
         }
         
-        /* NUOVI STILI PER WIDGET HOME (Ispirati a Piped Music / iOS) */
+        /* NUOVI STILI PER WIDGET HOME (Ispirati a invidious Music / iOS) */
         .widget-row {
             overflow-x: auto;
             white-space: nowrap;
@@ -390,8 +390,8 @@
     <div id="toast-container"></div>
     <!-- Ambient background audio (replace assets/ambient_christmas_soft.mp3 with your file) -->
     <audio id="ambient-audio" src="assets/ambient_christmas_soft.mp3" loop preload="auto">
-    <!-- PIPED audio element -->
-    <audio id="aura-piped-audio" preload="auto"></audio>
+    <!-- invidious audio element -->
+    <audio id="aura-invidious-audio" preload="auto"></audio>
 </audio>
 
     <!-- Snow visual layers: falling snow canvas + ground accumulation -->
@@ -427,7 +427,7 @@
                 <button onclick="performSearch()" class="p-3 accent-bg rounded-r-lg accent-hover"><i data-lucide="search" class="w-6 h-6"></i></button>
             </div>
             <div id="search-results" class="max-h-96 overflow-y-auto space-y-3 p-2">
-                <p class="text-center text-gray-500">Inizia a digitare per cercare musica su Piped.</p>
+                <p class="text-center text-gray-500">Inizia a digitare per cercare musica su invidious.</p>
             </div>
             <button onclick="closeSearchModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white transition"><i data-lucide="x" class="w-6 h-6"></i></button>
         </div>
@@ -674,7 +674,7 @@
         const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/se02babro-tech/Aura-Music-/main/"; 
         const STORIES_MANIFEST_URL = GITHUB_RAW_BASE + "User_videos.json"; 
         
-        let AURA_MAP = []; // Contiene i metadati dei brani Piped
+        let AURA_MAP = []; // Contiene i metadati dei brani invidious
         
         // --- Stili e Icone per Mood Grid Migliorata (Natale/Glaciale) ---
         const MOOD_STYLES = {
@@ -700,13 +700,13 @@
         // -------------------------------------------------------------
         
         let currentTrackData = null;
-        let ytPlayer = null; // Oggetto del Player IFrame di Piped
+        let ytPlayer = null; // Oggetto del Player IFrame di invidious
         let isPlayerReady = false; 
 
         let likedTracks = new Set();
         let userPlaylists = [];
         let remoteStories = []; 
-        let activeFilter = 'Trending'; // Filtro di default per Piped
+        let activeFilter = 'Trending'; // Filtro di default per invidious
         let isLooping = false;
         let loggedInUser = null;
         
@@ -714,7 +714,7 @@
 
         let progressInterval = null;
         let adCheckInterval = null; // NUOVO: Intervallo per il blocco pubblicità
-        let currentVolume = 80; // Volume in percentuale (0-100) per Piped API
+        let currentVolume = 80; // Volume in percentuale (0-100) per invidious API
         let trackIdToAdd = null; 
         
         // Dati Storie Video (Natale/Glaciale)
@@ -754,7 +754,7 @@
         window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady; 
 
         function onPlayerReady(event) {
-            console.log("Piped Player Ready. Inizializzazione controlli.");
+            console.log("invidious Player Ready. Inizializzazione controlli.");
             isPlayerReady = true; 
 
             // ** MODIFICA CRITICA PER MOBILE/BACKGROUND **
@@ -852,38 +852,37 @@
         // ====================================================================
 
         /**
-         * Carica i brani da Piped in base al filtro/query.
+         * Carica i brani da invidious in base al filtro/query.
          */
         
+
 async function fetchTracks(filter = 'Trending') {
     const container = document.getElementById('home-widgets-container');
     if (container) {
-        container.innerHTML = `<p class="text-center text-gray-400 col-span-full"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i> Caricamento brani da Piped... (${filter})</p>`;
+        container.innerHTML = `<p class="text-center text-gray-400 col-span-full"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i> Caricamento brani da Invidious... (${filter})</p>`;
         try { lucide.createIcons && lucide.createIcons(); } catch(e){}
     }
 
     try {
         var query = (filter === 'Trending') ? 'musica in tendenza' : (filter || 'musica');
-        const url = `https://piped.video/api/v1/search?q=${encodeURIComponent(query)}`;
+        const proxy = "https://api.allorigins.win/raw?url=";
+        const targetUrl = `https://yewtu.be/api/v1/search?q=${encodeURIComponent(query)}`;
+        const url = proxy + encodeURIComponent(targetUrl);
+
         const res = await fetch(url);
-        if(!res.ok) throw new Error('Piped search failed: ' + res.status);
+        if(!res.ok) throw new Error('Invidious proxy search failed: ' + res.status);
         const data = await res.json();
 
-        var items = [];
-        if (Array.isArray(data)) items = data;
-        else if (data.items) items = data.items;
-        else if (data.videos) items = data.videos;
-        else items = [];
+        var items = Array.isArray(data) ? data : (data.items || data.videos || []);
 
         const results = items.map(function(item){
-            // Normalize fields from common Piped responses
-            var id = item.videoId || item.id || (item.video && (item.video.videoId || item.video.id)) || item._id || item.video_id;
-            var title = item.title || (item.snippet && item.snippet.title) || (item.video && item.video.title) || 'Unknown Title';
-            var artist = item.author || item.channel || (item.snippet && item.snippet.channelTitle) || (item.video && item.video.author) || 'Unknown Artist';
-            var cover = item.thumbnail || (item.snippet && item.snippet.thumbnails && item.snippet.thumbnails.medium && item.snippet.thumbnails.medium.url) || (item.video && item.video.thumb) || 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="100%" height="100%" fill="#171717"/></svg>');
+            var id = item.videoId || item.id;
+            var title = item.title || 'Unknown Title';
+            var artist = item.author || 'Unknown Artist';
+            var cover = item.videoThumbnails && item.videoThumbnails[0] ? item.videoThumbnails[0].url : 'https://via.placeholder.com/128';
             return {
                 id: id,
-                youtubeId: id, // legacy name used elsewhere
+                youtubeId: id,
                 title: title,
                 artist: artist,
                 cover: cover,
@@ -898,10 +897,11 @@ async function fetchTracks(filter = 'Trending') {
         renderHomePageWidgets();
     } catch(err) {
         console.error('fetchTracks error', err);
-        if(container) container.innerHTML = `<p class="text-center p-4 text-red-400 col-span-full">Errore caricamento da Piped: ${err.message}</p>`;
+        if(container) container.innerHTML = `<p class="text-center p-4 text-red-400 col-span-full">Errore caricamento da Invidious (proxy): ${err.message}</p>`;
         AURA_MAP = [];
     }
 }
+
 function getRandomAccentColor() {
             const colors = ['#00BFFF', '#34D399', '#FCD34D', '#FF007F', '#8B5CF6']; // Glacial, Mint, Gold, Magenta, Violet
             return colors[Math.floor(Math.random() * colors.length)];
@@ -920,7 +920,7 @@ function getRandomAccentColor() {
         window.resetHomePage = function() {
             // Riporta il filtro allo stato iniziale (Trending)
             activeFilter = 'Trending';
-            // Ricarica i brani di tendenza da Piped
+            // Ricarica i brani di tendenza da invidious
             fetchTracks('Trending'); 
             // Mostra la sezione Music (Home)
             showSection('music'); 
@@ -988,7 +988,7 @@ function getRandomAccentColor() {
 
 
         /**
-         * Funzioni di riproduzione del player Piped
+         * Funzioni di riproduzione del player invidious
          */
         window.playTrack = function(trackId, autoplay = true) {
             const track = AURA_MAP.find(t => t.id === trackId);
@@ -1335,8 +1335,8 @@ function getRandomAccentColor() {
                 return;
             }
 
-            // Simula l'URL del brano usando l'ID di Piped
-            const shareUrl = `https://piped.video/watch/${track.youtubeId}`;
+            // Simula l'URL del brano usando l'ID di invidious
+            const shareUrl = `https://invidious.video/watch/${track.youtubeId}`;
             const shareTitle = `Ascolta "${track.title}" di ${track.artist} su Aura Music!`;
 
             if (navigator.share) {
@@ -1667,7 +1667,7 @@ function getRandomAccentColor() {
                 .filter(t => t);
 
             if (tracksToDisplay.length === 0) {
-                 container.innerHTML = '<p class="text-center p-4 text-gray-500">I tuoi preferiti sono stati eliminati da Piped.</p>';
+                 container.innerHTML = '<p class="text-center p-4 text-gray-500">I tuoi preferiti sono stati eliminati da invidious.</p>';
                  return;
             }
 
@@ -1714,7 +1714,7 @@ function getRandomAccentColor() {
         }
         function closeSearchModal() {
             document.getElementById('search-modal').classList.add('hidden');
-            document.getElementById('search-results').innerHTML = '<p class="text-center text-gray-500">Inizia a digitare per cercare musica su Piped.</p>';
+            document.getElementById('search-results').innerHTML = '<p class="text-center text-gray-500">Inizia a digitare per cercare musica su invidious.</p>';
         }
 
         async function performSearch(isLiveInput = false) {
@@ -1737,7 +1737,7 @@ function getRandomAccentColor() {
             try {
                  const response = await fetch(url);
                  if (!response.ok) {
-                     throw new Error(`Piped API Error! Status: ${response.status}`);
+                     throw new Error(`invidious API Error! Status: ${response.status}`);
                  }
                  const data = await response.json();
 
@@ -1788,7 +1788,7 @@ function getRandomAccentColor() {
                  lucide.createIcons();
 
             } catch (error) {
-                console.error("Errore nella ricerca Piped:", error);
+                console.error("Errore nella ricerca invidious:", error);
                 resultsContainer.innerHTML = `<p class="text-center p-4 text-red-400">Errore: ${error.message}. Riprova più tardi.</p>`;
             }
         }
@@ -1974,7 +1974,7 @@ function getRandomAccentColor() {
                 remoteStories = data.map((story, index) => ({
                     id: index + 1,
                     ...story,
-                    trackId: story.trackId, // Stringa Piped ID
+                    trackId: story.trackId, // Stringa invidious ID
                     video_url: story.videoUrl || story.video_url || ''
                 }));
             } catch (error) {
@@ -2230,7 +2230,7 @@ function getRandomAccentColor() {
     </script>
 
 <script>
-/* Ambient audio autoplay + pause when main Piped starts */
+/* Ambient audio autoplay + pause when main invidious starts */
 (function(){
   const ambient = document.getElementById('ambient-audio');
   // try to autoplay (may be blocked on some browsers)
@@ -2247,7 +2247,7 @@ function getRandomAccentColor() {
     setTimeout(tryPlayAmbient, 300);
   });
 
-  // Pause ambient when the main Piped player starts playing
+  // Pause ambient when the main invidious player starts playing
   // The main player exposes ytPlayer; we watch for state changes if available
   function onYTStateChangeHandler() {
     try {
@@ -2370,25 +2370,25 @@ function getRandomAccentColor() {
 </script>
 
 
-<!-- PIPED + YT-SHIM: provide YT.Player-compatible shim using Piped streams -->
+<!-- invidious + YT-SHIM: provide YT.Player-compatible shim using invidious streams -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.4/dist/hls.min.js"></script>
 <script>
 (function(){
   
-  const PIPED_STREAMS = (id) => `${PIPED_BASE}/api/v1/streams/${encodeURIComponent(id)}`;
+  const invidious_STREAMS = (id) => `${invidious_BASE}/api/v1/streams/${encodeURIComponent(id)}`;
   // Ensure audio element exists
-  let audio = document.getElementById('piped-audio');
+  let audio = document.getElementById('invidious-audio');
   if(!audio){
     audio = document.createElement('audio');
-    audio.id = 'piped-audio';
+    audio.id = 'invidious-audio';
     audio.preload = 'auto';
     document.body.appendChild(audio);
   }
   // helper attach
   async function resolveStreamUrl(id){
     try{
-      const r = await fetch(PIPED_STREAMS(id));
-      if(!r.ok) throw new Error('Piped streams fetch failed: ' + r.status);
+      const r = await fetch(invidious_STREAMS(id));
+      if(!r.ok) throw new Error('invidious streams fetch failed: ' + r.status);
       const data = await r.json();
       let candidates = [];
       if(Array.isArray(data)) candidates = data;
@@ -2503,7 +2503,7 @@ function getRandomAccentColor() {
       }
     };
   } else {
-    // wrap existing playTrack to use piped: keep original but also intercept calls
+    // wrap existing playTrack to use invidious: keep original but also intercept calls
     const origPlay = window.playTrack;
     window.playTrack = function(videoId){
       if(window.ytPlayer && typeof window.ytPlayer.loadVideoById === 'function'){
@@ -2517,12 +2517,12 @@ function getRandomAccentColor() {
 </script>
 
 
-    <!-- AuraPipedCore: Piped-only player engine (replaces Piped dependency) -->
+    <!-- AurainvidiousCore: invidious-only player engine (replaces invidious dependency) -->
     <script>
     (function(){
-        var PIPED_BASE = 'https://piped.video';
-        var PIPED_SEARCH = function(q){ return PIPED_BASE + '/api/v1/search?q=' + encodeURIComponent(q); };
-        var PIPED_STREAMS = function(id){ return PIPED_BASE + '/api/v1/streams/' + encodeURIComponent(id); };
+        var invidious_BASE = 'https://invidious.video';
+        var invidious_SEARCH = function(q){ return invidious_BASE + '/api/v1/search?q=' + encodeURIComponent(q); };
+        var invidious_STREAMS = function(id){ return invidious_BASE + '/api/v1/streams/' + encodeURIComponent(id); };
 
         // Simple Emitter (ES5)
         function E(){ this.l = {}; }
@@ -2530,8 +2530,8 @@ function getRandomAccentColor() {
         E.prototype.emit = function(n){ var a = Array.prototype.slice.call(arguments,1); var ls = this.l[n]||[]; for(var i=0;i<ls.length;i++){ try{ ls[i].apply(null,a);}catch(e){console.error(e);} } };
 
         // Core player
-        function AuraPipedCore(){
-            this.audio = document.getElementById('aura-piped-audio') || (function(){ var a=document.createElement('audio'); a.id='aura-piped-audio'; a.preload='auto'; document.body.appendChild(a); return a; })();
+        function AurainvidiousCore(){
+            this.audio = document.getElementById('aura-invidious-audio') || (function(){ var a=document.createElement('audio'); a.id='aura-invidious-audio'; a.preload='auto'; document.body.appendChild(a); return a; })();
             this.hls = null;
             this.em = new E();
             this.state = -1; // -1 unstarted, 0 ended, 1 playing, 2 paused, 3 buffering
@@ -2546,9 +2546,9 @@ function getRandomAccentColor() {
             this.audio.addEventListener('error', function(e){ self.em.emit('error', e); });
         }
 
-        AuraPipedCore.prototype._resolve = function(id){
-            var url = PIPED_STREAMS(id);
-            return fetch(url).then(function(r){ if(!r.ok) throw new Error('Piped streams fetch failed: '+r.status); return r.json(); }).then(function(data){
+        AurainvidiousCore.prototype._resolve = function(id){
+            var url = invidious_STREAMS(id);
+            return fetch(url).then(function(r){ if(!r.ok) throw new Error('invidious streams fetch failed: '+r.status); return r.json(); }).then(function(data){
                 var cand = [];
                 if(Array.isArray(data)) cand = data;
                 else if(data.formats) cand = data.formats;
@@ -2568,7 +2568,7 @@ function getRandomAccentColor() {
             });
         };
 
-        AuraPipedCore.prototype._attach = function(streamUrl, autoplay, startSeconds){
+        AurainvidiousCore.prototype._attach = function(streamUrl, autoplay, startSeconds){
             var audio = this.audio;
             try{ if(this.hls){ this.hls.destroy(); this.hls = null; } }catch(e){}
             if(streamUrl.indexOf('.m3u8') !== -1 && window.Hls && !audio.canPlayType('application/vnd.apple.mpegurl')){
@@ -2591,21 +2591,21 @@ function getRandomAccentColor() {
             }
         };
 
-        AuraPipedCore.prototype.playId = function(id, autoplay, startSeconds){
+        AurainvidiousCore.prototype.playId = function(id, autoplay, startSeconds){
             var self = this;
             this.currentId = id;
             return this._resolve(id).then(function(s){ if(!s) throw new Error('No stream for id '+id); self._attach(s, autoplay===undefined?true:!!autoplay, startSeconds||0); return s; });
         };
-        AuraPipedCore.prototype.play = function(){ try{ this.audio.play().catch(function(){}); }catch(e){} };
-        AuraPipedCore.prototype.pause = function(){ try{ this.audio.pause(); }catch(e){} };
-        AuraPipedCore.prototype.seekTo = function(s){ try{ if(this.audio.duration) this.audio.currentTime = s; }catch(e){} };
-        AuraPipedCore.prototype.getCurrentTime = function(){ return this.audio.currentTime||0; };
-        AuraPipedCore.prototype.getDuration = function(){ return this.audio.duration||0; };
-        AuraPipedCore.prototype.setVolume = function(v){ this.volume = v; try{ this.audio.volume = Math.min(1,Math.max(0,v/100)); localStorage.setItem('volume', v); }catch(e){} };
-        AuraPipedCore.prototype.getVolume = function(){ return this.volume; };
+        AurainvidiousCore.prototype.play = function(){ try{ this.audio.play().catch(function(){}); }catch(e){} };
+        AurainvidiousCore.prototype.pause = function(){ try{ this.audio.pause(); }catch(e){} };
+        AurainvidiousCore.prototype.seekTo = function(s){ try{ if(this.audio.duration) this.audio.currentTime = s; }catch(e){} };
+        AurainvidiousCore.prototype.getCurrentTime = function(){ return this.audio.currentTime||0; };
+        AurainvidiousCore.prototype.getDuration = function(){ return this.audio.duration||0; };
+        AurainvidiousCore.prototype.setVolume = function(v){ this.volume = v; try{ this.audio.volume = Math.min(1,Math.max(0,v/100)); localStorage.setItem('volume', v); }catch(e){} };
+        AurainvidiousCore.prototype.getVolume = function(){ return this.volume; };
 
         // expose core
-        window.auraCore = window.auraCore || new AuraPipedCore();
+        window.auraCore = window.auraCore || new AurainvidiousCore();
 
         // create ytPlayer shim pointing to auraCore to keep UI code intact
         window.ytPlayer = {
