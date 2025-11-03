@@ -865,7 +865,7 @@ async function fetchTracks(filter = 'Trending') {
 
     try {
         var query = (filter === 'Trending') ? 'musica in tendenza' : (filter || 'musica');
-        const proxy = "https://api.allorigins.win/raw?url=";
+        const proxy = "https://corsproxy.io/?";
         const targetUrl = `https://yewtu.be/api/v1/search?q=${encodeURIComponent(query)}`;
         const url = proxy + encodeURIComponent(targetUrl);
 
