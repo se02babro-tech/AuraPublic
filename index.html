@@ -427,7 +427,7 @@
                 <button onclick="performSearch()" class="p-3 accent-bg rounded-r-lg accent-hover"><i data-lucide="search" class="w-6 h-6"></i></button>
             </div>
             <div id="search-results" class="max-h-96 overflow-y-auto space-y-3 p-2">
-                <p class="text-center text-gray-500">Inizia a digitare per cercare musica su invidious.</p>
+                <p class="text-center text-gray-500">Inizia a digitare per cercare musica .</p>
             </div>
             <button onclick="closeSearchModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white transition"><i data-lucide="x" class="w-6 h-6"></i></button>
         </div>
@@ -605,7 +605,7 @@
             <h2 class="text-3xl font-bold mb-6">Profilo Utente</h2>
             <div class="depth-glass p-6 rounded-xl max-w-lg space-y-4">
                 <p id="profile-info" class="text-lg font-semibold">Stato: Disconnesso</p>
-                <div id="vibe-score-display" class="text-xl accent-text font-bold">Stato: 0/100</div>
+                <div id="vibe-score-display" class="text-xl accent-text font-bold">Abbonamento:PREMIUM</div></div>
                 <button onclick="handleLogout()" class="px-4 py-2 bg-red-600 rounded-lg text-white font-bold hover:bg-red-700 transition">Disconnetti</button>
             </div>
         </section>
@@ -671,7 +671,8 @@
     <script>
         // --- CONFIGURAZIONE YOUTUBE ---
         // --- Dati & Configurazione Locali ---
-        const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/se02babro-tech/Aura-Music-/main/"; 
+        const YT_API_KEY = "AIzaSyCohnVT3KEG_6wMjEHQu9STCWBDXpPkSVc";
+const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/se02babro-tech/Aura-Music-/main/"; 
         const STORIES_MANIFEST_URL = GITHUB_RAW_BASE + "User_videos.json"; 
         
         let AURA_MAP = []; // Contiene i metadati dei brani invidious
@@ -856,51 +857,47 @@
          */
         
 
+
 async function fetchTracks(filter = 'Trending') {
     const container = document.getElementById('home-widgets-container');
     if (container) {
-        container.innerHTML = `<p class="text-center text-gray-400 col-span-full"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i> Caricamento brani da Invidious... (${filter})</p>`;
+        container.innerHTML = `<p class="text-center text-gray-400 col-span-full"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i> Caricamento brani da iTunes... (${filter})</p>`;
         try { lucide.createIcons && lucide.createIcons(); } catch(e){}
     }
-
     try {
-        var query = (filter === 'Trending') ? 'musica in tendenza' : (filter || 'musica');
-        const proxy = "https://corsproxy.io/?";
-        const targetUrl = `https://yewtu.be/api/v1/search?q=${encodeURIComponent(query)}`;
-        const url = proxy + encodeURIComponent(targetUrl);
-
+        const query = (filter === 'Trending') ? 'Rap Italiano, Trap Italiana, Pop Italiano, Dance Italiana' : (filter || 'music');
+        const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=24`;
         const res = await fetch(url);
-        if(!res.ok) throw new Error('Invidious proxy search failed: ' + res.status);
+        if (!res.ok) throw new Error('iTunes search failed: ' + res.status);
         const data = await res.json();
-
-        var items = Array.isArray(data) ? data : (data.items || data.videos || []);
-
-        const results = items.map(function(item){
-            var id = item.videoId || item.id;
-            var title = item.title || 'Unknown Title';
-            var artist = item.author || 'Unknown Artist';
-            var cover = item.videoThumbnails && item.videoThumbnails[0] ? item.videoThumbnails[0].url : 'https://via.placeholder.com/128';
+        const items = data.results || [];
+        const results = items.map(it => {
+            const title = it.trackName || it.collectionName || 'Unknown Title';
+            const artist = it.artistName || 'Unknown Artist';
+            const cover = it.artworkUrl100 ? it.artworkUrl100.replace(/100x100bb.jpg$/,'600x600bb.jpg') : 'https://via.placeholder.com/512';
+            const itunesId = it.trackId || it.collectionId || (title + '|' + artist);
             return {
-                id: id,
-                youtubeId: id,
+                id: 'itunes-' + itunesId,
+                itunesId: itunesId,
                 title: title,
                 artist: artist,
                 cover: cover,
+                youtube_search_query: `${title} ${artist}`,
                 mood: (filter === 'Trending') ? getTrackMood() : filter,
                 vibe: Math.floor(Math.random() * 100) + 1,
                 color: getRandomAccentColor(),
                 rgb: getRandomAccentRGB()
             };
-        }).filter(function(t){ return t.id; });
-
+        });
         AURA_MAP = results;
         renderHomePageWidgets();
     } catch(err) {
         console.error('fetchTracks error', err);
-        if(container) container.innerHTML = `<p class="text-center p-4 text-red-400 col-span-full">Errore caricamento da Invidious (proxy): ${err.message}</p>`;
+        if (container) container.innerHTML = `<p class="text-center p-4 text-red-400 col-span-full">Errore caricamento da iTunes: ${err.message}</p>`;
         AURA_MAP = [];
     }
 }
+
 
 function getRandomAccentColor() {
             const colors = ['#00BFFF', '#34D399', '#FCD34D', '#FF007F', '#8B5CF6']; // Glacial, Mint, Gold, Magenta, Violet
@@ -990,24 +987,40 @@ function getRandomAccentColor() {
         /**
          * Funzioni di riproduzione del player invidious
          */
-        window.playTrack = function(trackId, autoplay = true) {
-            const track = AURA_MAP.find(t => t.id === trackId);
-            if (!track) return;
-            currentTrackData = track;
-            
-            if (isPlayerReady) {
-                ytPlayer.loadVideoById(trackId);
-                // Il player imposterà il volume predefinito, poi checkAndSkipAd() lo gestirà.
-            } else {
-                showToast("Player in fase di caricamento. Riprova tra un attimo.", 'info');
+        
+window.playTrack = async function(trackId, autoplay = true) {
+    try {
+        let track = AURA_MAP.find(t => t.id === trackId) || AURA_MAP.find(t => t.youtubeId === trackId);
+        if (!track) return;
+        currentTrackData = track;
+        // Resolve YouTube on-demand if this is an iTunes item
+        if (String(track.id).startsWith('itunes-') && !track.youtubeId) {
+            const query = track.youtube_search_query || `${track.title} ${track.artist}`;
+            const ytKey = (typeof YT_API_KEY !== 'undefined') ? YT_API_KEY : null;
+            if (!ytKey) {
+                showToast('YouTube API key missing for resolving video', 'error');
+                return;
             }
-            
-            updateUI(track);
-            playerBar.classList.add('active');
-            
-            // *** MODIFICA: Aggiornamento manuale icona quando si carica una nuova traccia ***
-            togglePlayIcon(false); // Assume che stia per partire (mostra ⏯)
+            const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${encodeURIComponent(query)}&key=${ytKey}`;
+            const res = await fetch(url);
+            if (!res.ok) { showToast('YouTube search failed: ' + res.status, 'error'); return; }
+            const js = await res.json();
+            const first = js.items && js.items[0];
+            const videoId = first && first.id && (first.id.videoId || first.id);
+            if (!videoId) { showToast('Nessun risultato YouTube per: ' + query, 'error'); return; }
+            track.youtubeId = videoId;
         }
+        if (isPlayerReady && ytPlayer) {
+            try { ytPlayer.loadVideoById(track.youtubeId); if (autoplay) ytPlayer.playVideo && ytPlayer.playVideo(); } catch(e){ try { ytPlayer.loadVideoById(track.youtubeId); } catch(e2){ console.warn(e2); } }
+        } else {
+            showToast('Player non pronto', 'info');
+        }
+        updateUI(track);
+        playerBar.classList.add('active');
+        togglePlayIcon(false);
+    } catch(e){ console.error('playTrack error', e); showToast('Errore: ' + e.message, 'error'); }
+};
+
 
         window.togglePlayPause = function() {
             if (!isPlayerReady) {
@@ -1613,13 +1626,11 @@ function getRandomAccentColor() {
             const moodMusicTracks = baseTracks.slice(16, 26);
             const moodMusicHtml = moodMusicTracks.map(getTrackElement).join('');
             allWidgetsHtml += createWidgetBlock('Rilassati con il nostro Flow', 'Playlist curate per il tuo stato d\'animo.', moodMusicHtml, 'horizontal-scroll');
+           
+           
+            
 
-            // NUOVO WIDGET 5: Ritorno al Passato (Horizontal Carousel)
-            const retroTracks = baseTracks.slice(26, 36);
-            const retroHtml = retroTracks.map(getTrackElement).join('');
-            allWidgetsHtml += createWidgetBlock('Ritorno al Passato', 'I successi che non smettono di emozionare.', retroHtml, 'horizontal-scroll');
-
-            // Applica tutti i widget
+// Applica tutti i widget
             container.innerHTML = allWidgetsHtml;
             lucide.createIcons();
         }
@@ -1714,7 +1725,7 @@ function getRandomAccentColor() {
         }
         function closeSearchModal() {
             document.getElementById('search-modal').classList.add('hidden');
-            document.getElementById('search-results').innerHTML = '<p class="text-center text-gray-500">Inizia a digitare per cercare musica su invidious.</p>';
+            document.getElementById('search-results').innerHTML = '<p class="text-center text-gray-500">Inizia a digitare per cercare musica.</p>';
         }
 
         async function performSearch(isLiveInput = false) {
