@@ -2207,7 +2207,75 @@ window.playTrack = async function(trackId, autoplay = true) {
         // ------------------------------------------------------------
 
 
-        async function initializeAppContent() {
+        
+
+// --- FUNZIONE DI RICERCA (iTunes) ---
+// Questa funzione cerca su iTunes e mostra i risultati nella modal #search-results.
+// Al click su un risultato aggiunge / aggiorna AURA_MAP e richiama playTrack() che risolve il video YouTube.
+async function performSearch(force=false) {
+    try {
+        const input = document.getElementById('search-input');
+        if(!input) return;
+        const q = String(input.value || '').trim();
+        const resultsContainer = document.getElementById('search-results');
+        if(!q || q.length < 2) {
+            if(resultsContainer) resultsContainer.innerHTML = '<p class="text-center text-gray-500">Digita almeno 2 caratteri per cercare.</p>';
+            return;
+        }
+        if(resultsContainer) resultsContainer.innerHTML = `<p class="text-center text-gray-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i> Sto cercando: ${q}</p>`;
+        // iTunes Search (country IT)
+        const url = `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&entity=song&limit=20&country=IT`;
+        const res = await fetch(url);
+        if(!res.ok) throw new Error('iTunes search failed: ' + res.status);
+        const js = await res.json();
+        const items = js.results || [];
+        if(items.length === 0) {
+            if(resultsContainer) resultsContainer.innerHTML = '<p class="text-center text-gray-500">Nessun risultato trovato.</p>';
+            return;
+        }
+        // Build results list
+        const listHtml = items.map(it => {
+            const title = it.trackName || it.collectionName || 'Unknown Title';
+            const artist = it.artistName || 'Unknown Artist';
+            const cover = (it.artworkUrl100) ? it.artworkUrl100.replace(/100x100bb.jpg$/,'600x600bb.jpg') : 'https://via.placeholder.com/512';
+            const itunesId = it.trackId || it.collectionId || (title + '|' + artist);
+            const id = 'itunes-' + itunesId;
+            // ensure AURA_MAP has this track (avoid duplicates)
+            const exists = AURA_MAP.find(t => t.id === id);
+            if(!exists) {
+                AURA_MAP.push({
+                    id: id,
+                    itunesId: itunesId,
+                    title: title,
+                    artist: artist,
+                    cover: cover,
+                    youtube_search_query: `${title} ${artist}`,
+                    mood: 'Search',
+                    vibe: Math.floor(Math.random()*100)+1,
+                    color: getRandomAccentColor(),
+                    rgb: getRandomAccentRGB()
+                });
+            }
+            return `
+                <div class="p-2 rounded-lg hover:bg-white/5 cursor-pointer flex items-center space-x-3" onclick="(function(e){ e && e.stopPropagation(); playTrack('${id}') })(event)">
+                    <img src="${cover}" class="w-12 h-12 rounded-md object-cover" alt="${title}">
+                    <div class="flex-grow">
+                        <div class="text-sm font-semibold truncate">${title}</div>
+                        <div class="text-xs text-gray-400 truncate">${artist}</div>
+                    </div>
+                    <div class="text-xs text-gray-400">iTunes</div>
+                </div>
+            `;
+        }).join('');
+        if(resultsContainer) resultsContainer.innerHTML = listHtml;
+        try { lucide.createIcons && lucide.createIcons(); } catch(e){}
+    } catch(err) {
+        console.error('performSearch error', err);
+        const resultsContainer = document.getElementById('search-results');
+        if(resultsContainer) resultsContainer.innerHTML = `<p class="text-center text-red-400">Errore ricerca: ${err.message}</p>`;
+    }
+}
+async function initializeAppContent() {
             
             // INIEZIONE DINAMICA DEL MANIFEST PWA 
             const pwaLink = document.createElement('link');
