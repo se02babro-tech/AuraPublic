@@ -834,14 +834,14 @@ const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/se02babro-tech/Aura-M
 async function fetchTracks(filter = 'Trending') {
     const container = document.getElementById('home-widgets-container');
     if (container) {
-        container.innerHTML = `<p class="text-center text-gray-400 col-span-full"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i> Caricamento brani da iTunes... (${filter})</p>`;
+        container.innerHTML = `<p class="text-center text-gray-400 col-span-full"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i> Caricamento brani... (${filter})</p>`;
         try { lucide.createIcons && lucide.createIcons(); } catch(e){}
     }
     try {
         const query = (filter === 'Trending') ? 'Rap Italiano, Trap Italiana, Pop Italiano, Dance Italiana' : (filter || 'music');
         const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=24`;
         const res = await fetch(url);
-        if (!res.ok) throw new Error('iTunes search failed: ' + res.status);
+        if (!res.ok) throw new Error('search failed: ' + res.status);
         const data = await res.json();
         const items = data.results || [];
         const results = items.map(it => {
@@ -850,7 +850,7 @@ async function fetchTracks(filter = 'Trending') {
             const cover = it.artworkUrl100 ? it.artworkUrl100.replace(/100x100bb.jpg$/,'600x600bb.jpg') : 'https://via.placeholder.com/512';
             const itunesId = it.trackId || it.collectionId || (title + '|' + artist);
             return {
-                id: 'itunes-' + itunesId,
+                id: 'AURA-' + itunesId,
                 itunesId: itunesId,
                 title: title,
                 artist: artist,
@@ -866,7 +866,7 @@ async function fetchTracks(filter = 'Trending') {
         renderHomePageWidgets();
     } catch(err) {
         console.error('fetchTracks error', err);
-        if (container) container.innerHTML = `<p class="text-center p-4 text-red-400 col-span-full">Errore caricamento da iTunes: ${err.message}</p>`;
+        if (container) container.innerHTML = `<p class="text-center p-4 text-red-400 col-span-full">Errore caricamento da Aura.server: ${err.message}</p>`;
         AURA_MAP = [];
     }
 }
@@ -891,7 +891,7 @@ function getRandomAccentColor() {
             // Riporta il filtro allo stato iniziale (Trending)
             activeFilter = 'Trending';
             // Ricarica i brani di tendenza da invidious
-            fetchTracks('Trending'); 
+            fetchTracks('POP ITALIANO, TRAP ITALIANA, RAP ITALIANA, HINDI ITALIANO, RAGGAETON ITALIANO '); 
             // Mostra la sezione Music (Home)
             showSection('music'); 
             // Resetta lo scorrimento della pagina
@@ -966,8 +966,8 @@ window.playTrack = async function(trackId, autoplay = true) {
         let track = AURA_MAP.find(t => t.id === trackId) || AURA_MAP.find(t => t.youtubeId === trackId);
         if (!track) return;
         currentTrackData = track;
-        // Resolve YouTube on-demand if this is an iTunes item
-        if (String(track.id).startsWith('itunes-') && !track.youtubeId) {
+        // Resolve YouTube on-demand if this is an Aura item
+        if (String(track.id).startsWith('AURA-') && !track.youtubeId) {
             const query = track.youtube_search_query || `${track.title} ${track.artist}`;
             const ytKey = (typeof YT_API_KEY !== 'undefined') ? YT_API_KEY : null;
             if (!ytKey) {
@@ -2182,8 +2182,7 @@ window.playTrack = async function(trackId, autoplay = true) {
 
         
 
-// --- FUNZIONE DI RICERCA (iTunes) ---
-// Questa funzione cerca su iTunes e mostra i risultati nella modal #search-results.
+
 // Al click su un risultato aggiunge / aggiorna AURA_MAP e richiama playTrack() che risolve il video YouTube.
 async function performSearch(force=false) {
     try {
@@ -2196,10 +2195,10 @@ async function performSearch(force=false) {
             return;
         }
         if(resultsContainer) resultsContainer.innerHTML = `<p class="text-center text-gray-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i> Sto cercando: ${q}</p>`;
-        // iTunes Search (country IT)
+        // Aura Search (country IT)
         const url = `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&entity=song&limit=20&country=IT`;
         const res = await fetch(url);
-        if(!res.ok) throw new Error('iTunes search failed: ' + res.status);
+        if(!res.ok) throw new Error('Aura search failed: ' + res.status);
         const js = await res.json();
         const items = js.results || [];
         if(items.length === 0) {
@@ -2212,7 +2211,7 @@ async function performSearch(force=false) {
             const artist = it.artistName || 'Unknown Artist';
             const cover = (it.artworkUrl100) ? it.artworkUrl100.replace(/100x100bb.jpg$/,'600x600bb.jpg') : 'https://via.placeholder.com/512';
             const itunesId = it.trackId || it.collectionId || (title + '|' + artist);
-            const id = 'itunes-' + itunesId;
+            const id = 'Aura-' + itunesId;
             // ensure AURA_MAP has this track (avoid duplicates)
             const exists = AURA_MAP.find(t => t.id === id);
             if(!exists) {
@@ -2236,7 +2235,7 @@ async function performSearch(force=false) {
                         <div class="text-sm font-semibold truncate">${title}</div>
                         <div class="text-xs text-gray-400 truncate">${artist}</div>
                     </div>
-                    <div class="text-xs text-gray-400">iTunes</div>
+                    <div class="text-xs text-gray-400">Aura</div>
                 </div>
             `;
         }).join('');
@@ -2688,13 +2687,13 @@ async function initializeAppContent() {
         }catch(e){}
     })();
     </script>
-<!-- START: Safe YouTube-audio player + iTunes search (non-destructive injection) -->
+<!-- START: Safe Aura-audio player + Aura  search (non-destructive injection) -->
 <script>
 (function(){
   if (window.__AURA_YT_AUDIO_INJECTED) return;
   window.__AURA_YT_AUDIO_INJECTED = true;
 
-  // Safe performSearch: queries iTunes and populates #search-results
+  // Safe performSearch: queries Aura and populates #search-results
   async function safePerformSearch(live=false) {
     try {
       const input = document.getElementById('search-input');
@@ -2708,10 +2707,10 @@ async function initializeAppContent() {
       resultsContainer.innerHTML = '<p class="text-center text-gray-400">Ricerca in corso...</p>';
       const url = 'https://itunes.apple.com/search?term=' + encodeURIComponent(q) + '&entity=song&limit=25&country=IT';
       const res = await fetch(url);
-      if (!res.ok) throw new Error('iTunes error ' + res.status);
+      if (!res.ok) throw new Error('Aura error ' + res.status);
       const js = await res.json();
       if (!js.results || js.results.length === 0) {
-        resultsContainer.innerHTML = '<p class="text-center text-gray-400">Nessun risultato trovato su iTunes.</p>';
+        resultsContainer.innerHTML = '<p class="text-center text-gray-400">Nessun risultato trovato.</p>';
         return;
       }
       // Build results markup
@@ -2826,7 +2825,7 @@ async function initializeAppContent() {
 
 })();
 </script>
-<!-- END: Safe YouTube-audio player + iTunes search -->
+<!-- END: Safe Aura-audio player + Aura search -->
 <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>
