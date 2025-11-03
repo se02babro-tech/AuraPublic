@@ -887,18 +887,29 @@ function getRandomAccentColor() {
         }
 
         // --- Gestione Reset Home ---
-        window.resetHomePage = function() {
-            // Riporta il filtro allo stato iniziale (Trending)
-            activeFilter = 'Trending';
-            // Ricarica i brani di tendenza da invidious
-            fetchTracks('POP ITALIANO, TRAP ITALIANA, RAP ITALIANA, HINDI ITALIANO, RAGGAETON ITALIANO '); 
-            // Mostra la sezione Music (Home)
-            showSection('music'); 
-            // Resetta lo scorrimento della pagina
-            window.scrollTo(0, 0); 
-        }
+        
+// --- Gestione Reset Home (corretto, senza toast) ---
+window.resetHomePage = async function() {
+    try {
+        // Ripristina il filtro di default
+        activeFilter = 'Trending';
 
-        // --- Funzioni di Autenticazione (OMESSE PER BREVITÀ, RIMANGONO UGUALI) ---
+        // Mostra sezione home
+        showSection('music');
+
+        // Ricarica i brani principali
+        await fetchTracks('Trending');
+
+        // Renderizza di nuovo i widget
+        renderHomePageWidgets();
+
+        // Torna in cima alla pagina
+        window.scrollTo(0, 0);
+    } catch (e) {
+        console.error("Errore nel reset della home:", e);
+    }
+};
+// --- Funzioni di Autenticazione (OMESSE PER BREVITÀ, RIMANGONO UGUALI) ---
         function openAuthModal(mode) {
              document.getElementById('auth-modal').classList.remove('hidden');
              switchAuthMode(mode);
@@ -2827,5 +2838,316 @@ async function initializeAppContent() {
 </script>
 <!-- END: Safe Aura-audio player + Aura search -->
 <script src="https://www.youtube.com/iframe_api"></script>
+
+
+<!-- BEGIN AURA AD HELPER (FINAL) -->
+<style id="aura-ad-helper-final-style">
+/* Positioning will be relative to #immersive-yt-player-container */
+#immersive-yt-player-container { position: relative; }
+
+.aura-ad-overlay {
+  position: absolute;
+  left: 12px;
+  bottom: 18px;
+  z-index: 1200;
+  background: rgba(10,10,10,0.72);
+  color: #E6F7FF;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 200ms ease, transform 200ms ease;
+  pointer-events: none; /* non-interactive */
+}
+.aura-ad-overlay.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+.aura-ad-overlay .aura-ad-icon {
+  width: 20px; height: 20px; display:inline-flex; align-items:center; justify-content:center;
+  background: linear-gradient(90deg, rgba(0,191,255,0.9), rgba(179,224,255,0.9));
+  border-radius: 6px;
+  color:#072033; font-weight:700;
+}
+.aura-ad-overlay .aura-ad-text { font-weight:600; letter-spacing:0.1px; opacity:0.95; }
+
+/* Skip button styling */
+#aura-skip-button {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1200;
+  background: rgba(10,10,10,0.78);
+  color: #DFF7FF;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  gap:8px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 200ms ease, transform 200ms ease;
+  cursor: pointer;
+  pointer-events: none;
+}
+#aura-skip-button.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+#aura-skip-button .dot { width:8px; height:8px; border-radius:50%; background:#00BFFF; box-shadow:0 0 8px rgba(0,191,255,0.4); flex:none; }
+</style>
+
+<script>
+(function(){
+  // Isolated scope
+  const POLL = 500; // ms
+  const overlayHtml = `
+    <div class="aura-ad-overlay" id="__aura_ad_overlay" aria-live="polite" role="status">
+      <div class="aura-ad-icon">♪</div>
+      <div class="aura-ad-text">Annuncio — <span id="__aura_ad_timer">...</span>s</div>
+    </div>`;
+  const skipBtnHtml = `
+    <div id="aura-skip-button" role="button" aria-hidden="true" title="Skip disponibile — clicca per saltare (azione manuale)">
+      <div class="dot"></div><div style="font-weight:600">Skip disponibile</div>
+    </div>`;
+
+  let state = {
+    initialized: false,
+    pollHandle: null,
+    adActive: false,
+    prevVolume: null
+  };
+
+  function safeQuery(sel) { try { return document.querySelector(sel); } catch(e){ return null; } }
+
+  function insertIntoImmersive() {
+    const container = document.getElementById('immersive-yt-player-container');
+    if (!container) return false;
+    // Avoid duplicating
+    if (!document.getElementById('__aura_ad_overlay')) {
+      container.insertAdjacentHTML('beforeend', overlayHtml);
+    }
+    if (!document.getElementById('aura-skip-button')) {
+      container.insertAdjacentHTML('beforeend', skipBtnHtml);
+    }
+    // attach click handler to skip button (manual only)
+    const skipBtn = document.getElementById('aura-skip-button');
+    if (skipBtn && !skipBtn.dataset.attach) {
+      skipBtn.addEventListener('click', function(e){
+        e.stopPropagation();
+        // user-initiated: attempt to forward to real skip if present
+        const real = safeQuery('.ytp-ad-skip-button, .ytp-ad-skip-button-container');
+        if (real) {
+          try { real.click(); } catch(err){ try { real.focus(); real.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter'})); } catch(e){} }
+        } else {
+          // no real skip exposed; inform user
+          console.warn('Skip button not found in player DOM.');
+        }
+      });
+      skipBtn.dataset.attach = '1';
+    }
+    return true;
+  }
+
+  function isAdPlaying() {
+    try {
+      if (window.ytPlayer && typeof ytPlayer.getPlayerState === 'function') {
+        // use getAdState if exists
+        if (typeof ytPlayer.getAdState === 'function') {
+          try {
+            const adState = ytPlayer.getAdState();
+            if (typeof adState === 'number' && adState !== 2) return true;
+          } catch(e){}
+        }
+        // DOM indicators
+        const domAd = !!document.querySelector('.ytp-ad-module, .ad-showing, .ytp-ad-player-overlay, .video-ads');
+        if (domAd) return true;
+        const dur = (typeof ytPlayer.getDuration === 'function') ? ytPlayer.getDuration() : 0;
+        const st = (typeof ytPlayer.getPlayerState === 'function') ? ytPlayer.getPlayerState() : null;
+        if (dur > 0 && dur < 120 && st === YT.PlayerState.PLAYING) return true;
+      }
+    } catch(e){}
+    return false;
+  }
+
+  function getRemaining() {
+    try {
+      if (window.ytPlayer && typeof ytPlayer.getDuration === 'function' && typeof ytPlayer.getCurrentTime === 'function') {
+        const dur = ytPlayer.getDuration();
+        const now = ytPlayer.getCurrentTime();
+        if (dur > 0 && dur - now > 0) return Math.max(0, Math.round(dur - now));
+      }
+    } catch(e){}
+    return null;
+  }
+
+  function showOverlay(remaining) {
+    const el = document.getElementById('__aura_ad_overlay');
+    const timer = document.getElementById('__aura_ad_timer');
+    if (!el || !timer) return;
+    timer.textContent = (remaining === null) ? '...' : remaining;
+    el.classList.add('show');
+  }
+  function hideOverlay() {
+    const el = document.getElementById('__aura_ad_overlay');
+    if (!el) return;
+    el.classList.remove('show');
+  }
+  function showSkipBtn() {
+    const el = document.getElementById('aura-skip-button');
+    if (!el) return;
+    el.classList.add('show');
+    el.setAttribute('aria-hidden','false');
+  }
+  function hideSkipBtn() {
+    const el = document.getElementById('aura-skip-button');
+    if (!el) return;
+    el.classList.remove('show');
+    el.setAttribute('aria-hidden','true');
+  }
+
+  function muteForAd() {
+    try {
+      if (window.ytPlayer && typeof ytPlayer.getVolume === 'function' && typeof ytPlayer.setVolume === 'function') {
+        if (state.prevVolume === null) {
+          try { state.prevVolume = ytPlayer.getVolume(); } catch(e){ state.prevVolume = 80; }
+        }
+        ytPlayer.setVolume(0);
+      }
+      // mute ambient/aux audio without destroying their state
+      const nodes = Array.from(document.querySelectorAll('audio#aura-invidious-audio,audio#ambient-audio,video#aura-invidious-video,video#ambient-video'));
+      nodes.forEach(n => {
+        if (n && n.dataset && n.dataset.__auraPrevVol === undefined) {
+          try { n.dataset.__auraPrevVol = (typeof n.volume === 'number') ? n.volume : ''; } catch(e){}
+          try { n.volume = 0; } catch(e){}
+        }
+      });
+    } catch(e){ console.warn('muteForAd', e); }
+  }
+  function restoreAfterAd() {
+    try {
+      if (window.ytPlayer && typeof ytPlayer.setVolume === 'function') {
+        const prev = (state.prevVolume !== null) ? state.prevVolume : (typeof currentVolume !== 'undefined' ? currentVolume : 80);
+        try { ytPlayer.setVolume(prev); } catch(e){}
+      }
+      const nodes = Array.from(document.querySelectorAll('audio#aura-invidious-audio,audio#ambient-audio,video#aura-invidious-video,video#ambient-video'));
+      nodes.forEach(n => {
+        if (n && n.dataset && n.dataset.__auraPrevVol !== undefined && n.dataset.__auraPrevVol !== '') {
+          try { n.volume = parseFloat(n.dataset.__auraPrevVol); } catch(e){}
+          delete n.dataset.__auraPrevVol;
+        }
+      });
+      state.prevVolume = null;
+    } catch(e){ console.warn('restoreAfterAd', e); }
+  }
+
+  function checkOnce() {
+    // ensure elements inserted in immersive container
+    insertIntoImmersive();
+
+    const adNow = isAdPlaying();
+    const rem = getRemaining();
+
+    if (adNow && !state.adActive) {
+      state.adActive = true;
+      muteForAd();
+      showOverlay(rem);
+      // show skip button only if real skip exists
+      const realSkip = safeQuery('.ytp-ad-skip-button, .ytp-ad-skip-button-container');
+      if (realSkip) showSkipBtn(); else hideSkipBtn();
+    } else if (!adNow && state.adActive) {
+      state.adActive = false;
+      restoreAfterAd();
+      hideOverlay();
+      hideSkipBtn();
+    } else if (adNow && state.adActive) {
+      // update countdown and skip presence
+      showOverlay(rem);
+      const realSkip2 = safeQuery('.ytp-ad-skip-button, .ytp-ad-skip-button-container');
+      if (realSkip2) showSkipBtn(); else hideSkipBtn();
+    } else {
+      // nothing to do
+      hideOverlay();
+      hideSkipBtn();
+    }
+  }
+
+  function start() {
+    if (state.pollHandle) clearInterval(state.pollHandle);
+    state.pollHandle = setInterval(checkOnce, POLL);
+    // run immediately
+    checkOnce();
+  }
+
+  // init when DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+
+  // expose for debug
+  window.__auraAdHelperFinal = { start: start, stop: function(){ if(state.pollHandle) clearInterval(state.pollHandle); state.pollHandle = null; } };
+})();
+</script>
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Aura Music</title>
+<link rel="icon" href="https://via.placeholder.com/192x192"/>
+<link rel="apple-touch-icon" href="https://via.placeholder.com/192x192"/>
+<meta name="theme-color" content="#171717"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="ryzn-bg">
+
+<!-- Contenuto originale dell'applicazione -->
+<div id="app-container">
+  <!-- simulazione contenuto per mantenere compatibilità -->
+</div>
+
+<!-- 🔔 Annuncio Major Update (popup semitrasparente) -->
+<div id="major-update-popup" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[160] hidden flex items-center justify-center">
+  <div class="depth-glass bg-ryzn-bg/90 p-6 rounded-2xl max-w-md w-[90%] text-center relative border border-white/10 shadow-2xl">
+    <button id="close-update-popup" class="absolute top-3 right-3 text-gray-400 hover:text-white transition">
+      <i data-lucide="x" class="w-6 h-6"></i>
+    </button>
+    <h3 class="text-2xl font-bold mb-3 accent-text">🚀 Major Update Rilasciato!</h3>
+    <p class="text-gray-300 mb-2">Un importante aggiornamento OTA è stato rilasciato alle <strong>01:00 (ora italiana)</strong>.</p>
+    <p class="text-gray-400 text-sm">L’esperienza utente resta invariata, ma in backend è stata <strong>ricostruita la logica e l’intero database</strong> per garantire performance e stabilità superiori.</p>
+  </div>
+</div>
+
+<script>
+  // Mostra il popup solo se non è già stato chiuso
+  document.addEventListener("DOMContentLoaded", () => {
+    const hasSeenPopup = localStorage.getItem("aura_major_update_seen");
+    const popup = document.getElementById("major-update-popup");
+    const closeBtn = document.getElementById("close-update-popup");
+
+    if (!hasSeenPopup && popup) {
+      popup.classList.remove("hidden");
+    }
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () => {
+        popup.classList.add("hidden");
+        localStorage.setItem("aura_major_update_seen", "true");
+      });
+    }
+  });
+</script>
+
+
 </body>
 </html>
