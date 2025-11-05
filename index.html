@@ -31,7 +31,6 @@ if (typeof onPlayerStateChange === 'function') {
     const originalOnStateChange = onPlayerStateChange;
     onPlayerStateChange = function(event) {
         originalOnStateChange(event);
-        if (event.data === YT.PlayerState.ENDED && !isLooping) {
             skipForward();
         }
     }
@@ -66,45 +65,7 @@ function makeImmersiveSeekable() {
 }
 
 // Avvio più rapido del player (riduzione ritardi)
-const originalPlayTrack = window.playTrack;
-window.playTrack = async function(trackId, autoplay = true) {
-    if (!AURA_MAP || !AURA_MAP.length) return;
-    const track = AURA_MAP.find(t => t.id === trackId);
-    if (!track) return;
-
-    currentTrack = track;
-        currentTrackData = track; // sync for media session
-    const query = encodeURIComponent(`${track.title} ${track.artist}`);
-
-    try {
-        // Effettua la ricerca su Invidious e ottiene la prima fonte audio
-        const res = await fetch(`${invidiousBase}/api/v1/search?q=${query}`);
-        const results = await res.json();
-        const first = results[0];
-        if (!first || !first.videoId) {
-            showToast("Nessun risultato Invidious trovato per questo brano.", "error");
-            return;
-        }
-        const audioUrl = `${invidiousBase}/latest_version?id=${first.videoId}&itag=140`;
-        audioEl.src = audioUrl;
-
-        // Inizio riproduzione appena i metadati sono caricati (più veloce dell'autoPlay standard)
-        audioEl.addEventListener("loadedmetadata", () => {
-            if (autoplay) {
-                audioEl.play().catch(() => {});
-            }
-        }, { once: true });
-
-        updateUI(track);
-        playerBar.classList.add('active');
-        togglePlayIcon(false);
-        showToast(`🎧 In riproduzione: ${track.title}`, 'info');
-        makeImmersiveSeekable();
-    } catch (e) {
-        console.error("Errore durante la ricerca Invidious:", e);
-        showToast("Errore Invidious: " + e.message, "error");
-    }
-};
+const originalPlayTrack = 
 
 // Inizializza il listener dopo il caricamento del DOM
 document.addEventListener("DOMContentLoaded", makeImmersiveSeekable);
@@ -549,8 +510,7 @@ document.addEventListener("DOMContentLoaded", makeImmersiveSeekable);
 <!-- Snow visual layers: falling snow canvas + ground accumulation -->
 <div aria-hidden="true" id="snow-fall"><canvas id="snow-canvas"></canvas></div>
 <div aria-hidden="true" id="snow-ground"></div>
-<div id="yt-player-container">
-<div id="ytPlayer"></div>
+
 </div>
 <div class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[150] hidden flex items-center justify-center p-4 modal" id="auth-modal">
 <div class="depth-glass bg-ryzn-bg p-6 rounded-2xl w-full max-w-sm shadow-2xl relative">
@@ -833,29 +793,7 @@ const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/se02babro-tech/Aura-M
         // FUNZIONI YOUTUBE PLAYER API (Punto Critico)
         // ====================================================================
 
-        function onYouTubeIframeAPIReady() {
-            ytPlayer = new YT.Player('ytPlayer', {
-                height: '390', 
-                width: '640', 
-                videoId: '', 
-                playerVars: {
-                    'controls': 0, 
-                    'disablekb': 1,
-                    'modestbranding': 1,
-                    'rel': 0,
-                    'showinfo': 0,
-                    'iv_load_policy': 3,
-                    'playsinline': 1, // CRITICO: Permette riproduzione senza fullscreen su iOS
-                    'enablejsapi': 1,
-                    'autoplay': 0 // Mantiene l'autoplay disabilitato per evitare blocchi
-                },
-                events: {
-                    'onReady': onPlayerReady,
-                    'onStateChange': onPlayerStateChange
-                }
-            });
-        }
-        window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady; 
+         
 
         function onPlayerReady(event) {
             console.log("invidious Player Ready. Inizializzazione controlli.");
@@ -877,7 +815,6 @@ const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/se02babro-tech/Aura-M
             }
 
             if (currentTrackData) {
-                 ytPlayer.cueVideoById(currentTrackData.youtubeId);
                  updateUI(currentTrackData); 
             }
             
@@ -887,17 +824,14 @@ const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/se02babro-tech/Aura-M
 
         function onPlayerStateChange(event) {
             const state = event.data; 
-            if (state === YT.PlayerState.PLAYING) {
                 // *** MODIFICA: Icona rimossa qui. Ora cambia solo al click su togglePlayPause() ***
                 setupProgressInterval();
                 updateMediaSession();
                 playerBar.classList.add('active');
                 // checkAndSkipAd(); // Controllo immediato all'avvio: Rimosso da qui, si affida all'intervallo
-            } else if (state === YT.PlayerState.PAUSED) {
                  // *** MODIFICA: Icona rimossa qui. Ora cambia solo al click su togglePlayPause() ***
                 clearInterval(progressInterval);
                 updateMediaSession();
-            } else if (state === YT.PlayerState.ENDED) {
                 clearInterval(progressInterval);
                 if (isLooping) {
                     ytPlayer.seekTo(0, true);
@@ -907,7 +841,6 @@ const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/se02babro-tech/Aura-M
                     skipForward();
                     // Il cambio traccia chiama playTrack() che aggiorna l'icona
                 }
-            } else if (state === YT.PlayerState.BUFFERING) {
                 // checkAndSkipAd(); // Controllo anche durante il buffering: Rimosso da qui, si affida all'intervallo
             }
         }
@@ -928,7 +861,6 @@ const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/se02babro-tech/Aura-M
             
             // Lo stato AD_ENDED (2) indica che non c'è un annuncio. 
             // Se AD_ENDED non è lo stato attuale, c'è un annuncio in corso o in queue (Stato 1=PLAYING/3=SKIPPABLE).
-            const isAdPlaying = adState !== 2 && (playerState === YT.PlayerState.PLAYING || playerState === YT.PlayerState.BUFFERING); 
 
             if (isAdPlaying) {
                 // console.log("Annuncio rilevato o imminente. Silenzia e tento il salto.");
@@ -985,7 +917,6 @@ async function fetchTracks(filter = 'Trending') {
                 title: title,
                 artist: artist,
                 cover: cover,
-                youtube_search_query: `${title} ${artist}`,
                 mood: (filter === 'Trending') ? getTrackMood() : filter,
                 vibe: Math.floor(Math.random() * 100) + 1,
                 color: getRandomAccentColor(),
@@ -1102,40 +1033,7 @@ window.resetHomePage = async function() {
          * Funzioni di riproduzione del player invidious
          */
         
-window.playTrack = async function(trackId, autoplay = true) {
-    try {
-        let track = AURA_MAP.find(t => t.id === trackId) || AURA_MAP.find(t => t.youtubeId === trackId);
-        if (!track) return;
-        currentTrackData = track;
-        trackIdToAdd = track.id;
-        console.log("🎵 Brano in riproduzione:", track.title);
-        // Resolve YouTube on-demand if this is an Aura item
-        if (String(track.id).startsWith('AURA-') && !track.youtubeId) {
-            const query = track.youtube_search_query || `${track.title} ${track.artist}`;
-            const ytKey = (typeof YT_API_KEY !== 'undefined') ? YT_API_KEY : null;
-            if (!ytKey) {
-                showToast('YouTube API key missing for resolving video', 'error');
-                return;
-            }
-            const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${encodeURIComponent(query)}&key=${ytKey}`;
-            const res = await fetch(url);
-            if (!res.ok) { showToast('YouTube search failed: ' + res.status, 'error'); return; }
-            const js = await res.json();
-            const first = js.items && js.items[0];
-            const videoId = first && first.id && (first.id.videoId || first.id);
-            if (!videoId) { showToast('Nessun risultato YouTube per: ' + query, 'error'); return; }
-            track.youtubeId = videoId;
-        }
-        if (isPlayerReady && ytPlayer) {
-            try { ytPlayer.loadVideoById(track.youtubeId); if (autoplay) ytPlayer.playVideo && ytPlayer.playVideo(); } catch(e){ try { ytPlayer.loadVideoById(track.youtubeId); } catch(e2){ console.warn(e2); } }
-        } else {
-            showToast('Player non pronto', 'info');
-        }
-        updateUI(track);
-        playerBar.classList.add('active');
-        togglePlayIcon(false);
-    } catch(e){ console.error('playTrack error', e); showToast('Errore: ' + e.message, 'error'); }
-};
+
 
 
         window.togglePlayPause = function() {
@@ -1155,11 +1053,9 @@ window.playTrack = async function(trackId, autoplay = true) {
 
             const playerState = ytPlayer.getPlayerState();
             
-            if (playerState === YT.PlayerState.PLAYING) {
                 ytPlayer.pauseVideo();
                 // *** MODIFICA: CAMBIO ICONA SUBITO AL CLICK - Stato successivo: PAUSA ***
                 togglePlayIcon(true); // Imposta su PAUSA (mostra  ▶.)
-            } else if (playerState === YT.PlayerState.PAUSED || playerState === YT.PlayerState.CUED) {
                 // Tentativo di riproduzione con gestione del blocco Autoplay
                 const attemptPlay = ytPlayer.playVideo();
                 // *** MODIFICA: CAMBIO ICONA SUBITO AL CLICK - Stato successivo: PLAY ***
@@ -1466,7 +1362,6 @@ trackIdToAdd = track.id;
             }
 
             // Simula l'URL del brano usando l'ID di invidious
-            const shareUrl = `https://invidious.video/watch/${track.youtubeId}`;
             const shareTitle = `Ascolta "${track.title}" di ${track.artist} su Aura Music!`;
 
             if (navigator.share) {
@@ -1878,7 +1773,6 @@ trackIdToAdd = track.id;
                  const newTracks = data.items
                      .map(item => ({
                          id: item.id.videoId,
-                         youtubeId: item.id.videoId,
                          title: item.snippet.title,
                          artist: item.snippet.channelTitle,
                          cover: item.snippet.thumbnails.medium ? item.snippet.thumbnails.medium.url : 'https://via.placeholder.com/64',
@@ -2220,7 +2114,6 @@ trackIdToAdd = track.id;
             document.getElementById('story-emoji').textContent = CHRISTMAS_EMOJIS[currentStoryIndex % CHRISTMAS_EMOJIS.length];
 
             // Cerca il brano associato
-            const track = AURA_MAP.find(t => t.youtubeId === story.trackId);
             document.getElementById('story-track-title').textContent = track ? `🎵 ${track.title}` : 'Musica di sottofondo';
         }
 
@@ -2327,7 +2220,6 @@ trackIdToAdd = track.id;
         
 
 
-// Al click su un risultato aggiunge / aggiorna AURA_MAP e richiama playTrack() che risolve il video YouTube.
 async function performSearch(force=false) {
     try {
         const input = document.getElementById('search-input');
@@ -2365,7 +2257,6 @@ async function performSearch(force=false) {
                     title: title,
                     artist: artist,
                     cover: cover,
-                    youtube_search_query: `${title} ${artist}`,
                     mood: 'Search',
                     vibe: Math.floor(Math.random()*100)+1,
                     color: getRandomAccentColor(),
@@ -2447,7 +2338,6 @@ async function initializeAppContent() {
     try {
       if (window.ytPlayer && typeof window.ytPlayer.getPlayerState === 'function') {
         const state = window.ytPlayer.getPlayerState();
-        // YT.PlayerState.PLAYING === 1
         if (state === 1) {
           if (!ambient.paused) ambient.pause();
         } else {
@@ -2562,7 +2452,6 @@ async function initializeAppContent() {
   setTimeout(start, 200);
 })();
 </script>
-<!-- invidious + YT-SHIM: provide YT.Player-compatible shim using invidious streams -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.4/dist/hls.min.js"></script>
 <script>
 (function(){
@@ -2667,9 +2556,7 @@ async function initializeAppContent() {
   ShimPlayer.prototype.getVolume = function(){ return Math.round((audio.volume||1)*100); };
   ShimPlayer.prototype.setVolume = function(v){ audio.volume = Math.min(1, Math.max(0, v/100)); };
 
-  // Expose global YT.Player and YT object
   window.YT = window.YT || {};
-  window.YT.Player = function(elementId, options){
     const p = new ShimPlayer(elementId, options);
     // also set global ytPlayer for compatibility
     window.ytPlayer = p;
@@ -2679,30 +2566,12 @@ async function initializeAppContent() {
   // Also provide a minimal get API for state constants
   window.YTState = YT_STATE;
 
-  // If original script expected onYouTubeIframeAPIReady to be called, call it now
-  if(typeof window.onYouTubeIframeAPIReady === 'function'){
-    try{ window.onYouTubeIframeAPIReady(); }catch(e){ console.warn('onYouTubeIframeAPIReady error',e); }
   }
   // Make playTrack(videoId) map to ytPlayer.loadVideoById if playTrack was not defined
-  if(typeof window.playTrack !== 'function'){
-    window.playTrack = function(videoId){
-      if(window.ytPlayer && typeof window.ytPlayer.loadVideoById === 'function'){
-        window.ytPlayer.loadVideoById(videoId, 0);
-      } else {
-        console.warn('ytPlayer not ready yet, trying to call onYouTubeIframeAPIReady and retry');
-        if(typeof window.onYouTubeIframeAPIReady === 'function') window.onYouTubeIframeAPIReady();
-        setTimeout(()=>{ if(window.ytPlayer) window.ytPlayer.loadVideoById(videoId,0); }, 200);
-      }
-    };
+  if(typeof 
   } else {
     // wrap existing playTrack to use invidious: keep original but also intercept calls
-    const origPlay = window.playTrack;
-    window.playTrack = function(videoId){
-      if(window.ytPlayer && typeof window.ytPlayer.loadVideoById === 'function'){
-        window.ytPlayer.loadVideoById(videoId,0);
-      }
-      try{ origPlay(videoId); }catch(e){}
-    };
+    const origPlay = 
   }
 
 })();
@@ -2814,9 +2683,7 @@ async function initializeAppContent() {
             addEventListener: function(){}, removeEventListener: function(){}
         };
 
-        // provide YT.PlayerState constants for code that checks them
         window.YT = window.YT || {};
-        window.YT.PlayerState = { UNSTARTED:-1, ENDED:0, PLAYING:1, PAUSED:2, BUFFERING:3, CUED:5 };
 
         // Mark player as ready and call original onPlayerReady-like init if present
         window.isPlayerReady = true;
@@ -2899,7 +2766,6 @@ async function initializeAppContent() {
     }
   }
 
-  // Create hidden YouTube-audio iframe and play by search
   window.__auraPlayFromSearch = function(title, artist, cover) {
     try {
       const query = encodeURIComponent((title + ' ' + (artist||'')).trim());
@@ -2919,7 +2785,6 @@ async function initializeAppContent() {
       iframe.style.left = '-9999px';
       iframe.style.top = '-9999px';
       iframe.setAttribute('allow', 'autoplay; encrypted-media');
-      iframe.src = 'https://www.youtube.com/embed?listType=search&list=' + query + '&autoplay=1';
       container.appendChild(iframe);
 
       // update UI using existing updateUI if available
@@ -2929,7 +2794,6 @@ async function initializeAppContent() {
           title: title || ('Search: '+query),
           artist: artist || '',
           cover: cover || (document.getElementById('player-cover')?.src || ''),
-          youtubeId: null,
           vibe: 50,
           mood: 'Search'
         };
@@ -2948,21 +2812,8 @@ async function initializeAppContent() {
     }
   };
 
-  // Override existing playTrack to use hidden YouTube search embed if it refers to external resolver
   try {
-    const origPlay = window.playTrack;
-    // replace only if original exists and contains youtube API lookup pattern (conservative)
-    if (typeof origPlay === 'function') {
-      const s = origPlay.toString();
-      if (s.includes('YouTube') || s.includes('youtube') || s.includes('YouTube API') || s.includes('youtube.googleapis')) {
-        window.playTrack = async function(trackId, autoplay=true){
-          try {
-            const track = (window.AURA_MAP || []).find(t => t.id === trackId) || (window.AURA_MAP || []).find(t => t.youtubeId === trackId);
-            if (!track) return;
-            // use search embed to play
-            window.__auraPlayFromSearch(track.title, track.artist, track.cover);
-          } catch(e){ console.error('overridden playTrack error', e); }
-        };
+    const origPlay = 
       }
     }
   } catch(e){ console.warn('playTrack override check failed', e); }
@@ -2970,7 +2821,6 @@ async function initializeAppContent() {
 })();
 </script>
 <!-- END: Safe Aura-audio player + Aura search -->
-<script src="https://www.youtube.com/iframe_api"></script>
 
 
 <!-- BEGIN AURA AD HELPER (FINAL) -->
@@ -3103,7 +2953,6 @@ async function initializeAppContent() {
         if (domAd) return true;
         const dur = (typeof ytPlayer.getDuration === 'function') ? ytPlayer.getDuration() : 0;
         const st = (typeof ytPlayer.getPlayerState === 'function') ? ytPlayer.getPlayerState() : null;
-        if (dur > 0 && dur < 120 && st === YT.PlayerState.PLAYING) return true;
       }
     } catch(e){}
     return false;
@@ -3236,36 +3085,7 @@ const audioEl = document.getElementById("aura-invidious-audio");
 let currentTrack = null;
 let isPlaying = false;
 
-window.playTrack = async function(trackId, autoplay = true) {
-    const track = AURA_MAP.find(t => t.id === trackId);
-    if (!track) return;
 
-    currentTrack = track;
-
-    // Search Invidious for the track
-    const query = encodeURIComponent(`${track.title} ${track.artist}`);
-    try {
-        const res = await fetch(`${invidiousBase}/api/v1/search?q=${query}`);
-        const results = await res.json();
-        const first = results[0];
-        if (!first || !first.videoId) {
-            showToast("Nessun risultato Invidious trovato per questo brano.", "error");
-            return;
-        }
-        const videoId = first.videoId;
-        const audioUrl = `${invidiousBase}/latest_version?id=${videoId}&itag=140`;
-
-        audioEl.src = audioUrl;
-        if (autoplay) audioEl.play();
-        updateUI(track);
-        playerBar.classList.add('active');
-        togglePlayIcon(false);
-        showToast(`🎧 In riproduzione: ${track.title}`, 'info');
-    } catch (e) {
-        console.error("Errore durante la ricerca Invidious:", e);
-        showToast("Errore Invidious: " + e.message, "error");
-    }
-};
 
 window.togglePlayPause = function() {
     if (!audioEl.src) {
@@ -3353,12 +3173,10 @@ async function fetchTracks(filter = 'Trending') {
             cover: (item.videoThumbnails && item.videoThumbnails[item.videoThumbnails.length - 1] && item.videoThumbnails[item.videoThumbnails.length - 1].url) 
                     || (item.thumbnail && item.thumbnail.url) 
                     || 'https://via.placeholder.com/512',
-            youtubeId: item.videoId || item.video_id || item.id || '',
             mood: filter,
             vibe: Math.floor(Math.random() * 100) + 1,
             color: getRandomAccentColor(),
             rgb: getRandomAccentRGB()
-        })).filter(r => r.youtubeId);
 
         AURA_MAP = results;
         renderHomePageWidgets();
@@ -3430,12 +3248,10 @@ function getRandomAccentRGB() {
 
 // === AUTO SKIP AUTOMATICO QUANDO FINISCE IL BRANO ===
 function enableAutoSkip() {
-    // --- Caso 1: Player YouTube / Invidious ---
     if (window.ytPlayer && typeof YT !== "undefined") {
         const oldHandler = window.onPlayerStateChange;
         window.onPlayerStateChange = function(event) {
             if (typeof oldHandler === "function") oldHandler(event);
-            if (event.data === YT.PlayerState.ENDED) {
                 console.log("Brano terminato → skip automatico");
                 skipForward();
             }
@@ -3453,6 +3269,83 @@ function enableAutoSkip() {
 
 // Attiva automaticamente dopo il caricamento del DOM
 document.addEventListener("DOMContentLoaded", enableAutoSkip);
+window.playTrack = async function(trackId, autoplay = true) {
+    if (!AURA_MAP || !AURA_MAP.length) return;
+    const track = AURA_MAP.find(t => t.id === trackId);
+    if (!track) return;
+
+    currentTrack = track;
+        currentTrackData = track; // sync for media session
+    const query = encodeURIComponent(`${track.title} ${track.artist}`);
+
+    try {
+        // Effettua la ricerca su Invidious e ottiene la prima fonte audio
+        const res = await fetch(`${invidiousBase}/api/v1/search?q=${query}`);
+        const results = await res.json();
+        const first = results[0];
+        if (!first || !first.videoId) {
+            showToast("Nessun risultato Invidious trovato per questo brano.", "error");
+            return;
+        }
+        const audioUrl = `${invidiousBase}/latest_version?id=${first.videoId}&itag=140`;
+        audioEl.src = audioUrl;
+
+        // Inizio riproduzione appena i metadati sono caricati (più veloce dell'autoPlay standard)
+        audioEl.addEventListener("loadedmetadata", () => {
+            if (autoplay) {
+                audioEl.play().catch(() => {});
+            }
+        }, { once: true });
+
+        updateUI(track);
+
+    // --- Media Session Metadata ---
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: track.title,
+            artist: track.artist,
+            artwork: [
+                { src: track.cover, sizes: '512x512', type: 'image/jpeg' }
+            ]
+        });
+
+        navigator.mediaSession.setActionHandler('play', () => { audioEl.play(); });
+        navigator.mediaSession.setActionHandler('pause', () => { audioEl.pause(); });
+        navigator.mediaSession.setActionHandler('previoustrack', () => { skipBackward(); });
+        navigator.mediaSession.setActionHandler('nexttrack', () => { skipForward(); });
+        navigator.mediaSession.setActionHandler('seekto', (details) => {
+            if (details.seekTime != null) audioEl.currentTime = details.seekTime;
+        });
+    }
+
+        playerBar.classList.add('active');
+        togglePlayIcon(false);
+        showToast(`🎧 In riproduzione: ${track.title}`, 'info');
+        makeImmersiveSeekable();
+
+// --- Audio-only progress & ending ---
+function updateProgress() {
+    const duration = audioEl.duration;
+    const currentTime = audioEl.currentTime;
+    if (duration && duration > 0) {
+        const percentage = (currentTime / duration) * 100;
+        if (progressBar) progressBar.style.width = `${percentage}%`;
+        if (progressBarImmersive) progressBarImmersive.style.width = `${percentage}%`;
+    }
+}
+
+audioEl.onended = () => {
+    if (isLooping) {
+        audioEl.currentTime = 0;
+        audioEl.play();
+    } else {
+        skipForward();
+    }
+};
+
+audioEl.onplay = () => { setupProgressInterval(); };
+audioEl.onpause = () => { clearInterval(progressInterval); };
+
 </script>
 <!-- END: Invidious-integrated Home & Search -->
 </body>
