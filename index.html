@@ -73,6 +73,7 @@ window.playTrack = async function(trackId, autoplay = true) {
     if (!track) return;
 
     currentTrack = track;
+        currentTrackData = track; // sync for media session
     const query = encodeURIComponent(`${track.title} ${track.artist}`);
 
     try {
@@ -1106,7 +1107,6 @@ window.playTrack = async function(trackId, autoplay = true) {
         let track = AURA_MAP.find(t => t.id === trackId) || AURA_MAP.find(t => t.youtubeId === trackId);
         if (!track) return;
         currentTrackData = track;
-        currentTrack = track; // sync UI
         trackIdToAdd = track.id;
         console.log("🎵 Brano in riproduzione:", track.title);
         // Resolve YouTube on-demand if this is an Aura item
@@ -1268,7 +1268,6 @@ window.playTrack = async function(trackId, autoplay = true) {
         }
 
         function updateUI(track) {
-    currentTrack = track; // sync UI
     playerTitle.textContent = track.title;
     playerArtist.textContent = track.artist;
     playerCover.src = track.cover;
