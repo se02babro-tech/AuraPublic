@@ -3298,6 +3298,38 @@ window.playTrack = async function(trackId, autoplay = true) {
         }, { once: true });
 
         updateUI(track);
+
+        // --- Media Session Metadata ---
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: track.title,
+                artist: track.artist,
+                artwork: [
+                    { src: track.cover, sizes: '512x512', type: 'image/jpeg' }
+                ]
+            });
+
+            navigator.mediaSession.setActionHandler('play', () => { audioEl.play(); });
+            navigator.mediaSession.setActionHandler('pause', () => { audioEl.pause(); });
+            navigator.mediaSession.setActionHandler('previoustrack', () => { skipBackward(); });
+            navigator.mediaSession.setActionHandler('nexttrack', () => { skipForward(); });
+            navigator.mediaSession.setActionHandler('seekto', (details) => {
+                if (details.seekTime != null) audioEl.currentTime = details.seekTime;
+            });
+        }
+
+
+    
+
+        navigator.mediaSession.setActionHandler('play', () => { audioEl.play(); });
+        navigator.mediaSession.setActionHandler('pause', () => { audioEl.pause(); });
+        navigator.mediaSession.setActionHandler('previoustrack', () => { skipBackward(); });
+        navigator.mediaSession.setActionHandler('nexttrack', () => { skipForward(); });
+        navigator.mediaSession.setActionHandler('seekto', (details) => {
+            if (details.seekTime != null) audioEl.currentTime = details.seekTime;
+        });
+    }
+
         playerBar.classList.add('active');
         togglePlayIcon(false);
         showToast(`🎧 In riproduzione: ${track.title}`, 'info');
